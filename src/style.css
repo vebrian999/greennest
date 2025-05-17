@@ -1,0 +1,138 @@
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Add to your existing CSS */
+.carousel-slides {
+  position: relative;
+}
+
+.carousel-slides img {
+  transition: opacity 0.5s ease-in-out;
+}
+
+.carousel-dot {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.carousel-dot.active {
+  opacity: 1;
+}
+
+/* Custom scrollbar styling */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+  display: block;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #45671e;
+  border-radius: 10px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #73ac32;
+}
+
+/* Enable smooth scrolling */
+.overflow-x-auto {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom scrollbar styling */
+.cards-container {
+  overflow-x: auto;
+  padding-bottom: 16px;
+  margin-bottom: -16px;
+}
+
+.cards-container::-webkit-scrollbar {
+  height: 8px;
+  width: 100%;
+}
+
+.cards-container::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.cards-container::-webkit-scrollbar-thumb {
+  background: #45671e;
+  border-radius: 4px;
+}
+
+.cards-container::-webkit-scrollbar-thumb:hover {
+  background: #73ac32;
+}
+
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grabbing {
+  cursor: grabbing;
+}
+
+#testimonialSlider {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+[id^="dropdown-"] {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+[id^="dropdown-"].show {
+  max-height: 500px;
+}
+
+svg[sidebar-toggle-item] {
+  transition: transform 0.3s ease;
+}
+
+/* Add to your style.css */
+@media (max-width: 768px) {
+  .grid {
+    justify-items: center;
+  }
+
+  .card {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* Optional overlay when sidebar is open */
+.sidebar-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-30;
+  display: none;
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
