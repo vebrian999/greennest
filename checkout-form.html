@@ -22,7 +22,7 @@
           <div class="hidden md:flex flex-grow justify-center font-light">
             <ul class="flex space-x-8">
               <li><a href="./index.html" class="text-primary transition-colors">Home</a></li>
-              <li><a href="#care" class="text-primary transition-colors">Care Tools</a></li>
+              <li><a href="./list-product.html" class="text-primary transition-colors">Shop All</a></li>
               <li><a href="#gifts" class="text-primary transition-colors">Gifts</a></li>
               <li><a href="#learn" class="text-primary transition-colors">Learn</a></li>
               <li><a href="#about" class="text-primary transition-colors">About Us</a></li>
@@ -103,7 +103,7 @@
           <!-- Navigation Links -->
           <ul class="py-2 border-b border-gray-200">
             <li><a href="./index.html" class="block px-4 py-2 text-primary hover:bg-gray-50">Home</a></li>
-            <li><a href="#care" class="block px-4 py-2 text-primary hover:bg-gray-50">Care Tools</a></li>
+            <li><a href="./list-product.html" class="block px-4 py-2 text-primary hover:bg-gray-50">Shop All</a></li>
             <li><a href="#gifts" class="block px-4 py-2 text-primary hover:bg-gray-50">Gifts</a></li>
             <li><a href="#learn" class="block px-4 py-2 text-primary hover:bg-gray-50">Learn</a></li>
             <li><a href="#about" class="block px-4 py-2 text-primary hover:bg-gray-50">About Us</a></li>
@@ -171,10 +171,10 @@
           <!-- Express Checkout Section -->
           <div class="mb-8">
             <h1 class="text-[#8E8E8E] text-center mb-4">Express checkout</h1>
-            <div class="flex flex-col sm:flex-row justify-center gap-2">
-              <img class="w-full sm:w-48" src="./src/img/pay-img (1).png" alt="" />
-              <img class="w-full sm:w-48" src="./src/img/pay-img (2).png" alt="" />
-              <img class="w-full sm:w-48" src="./src/img/pay-img (3).png" alt="" />
+            <div class="flex justify-center gap-2">
+              <img class="w-28 sm:w-48" src="./src/img/pay-img (1).png" alt="" />
+              <img class="w-28 sm:w-48" src="./src/img/pay-img (2).png" alt="" />
+              <img class="w-28 sm:w-48" src="./src/img/pay-img (3).png" alt="" />
             </div>
             <div class="flex my-4 items-center justify-center space-x-2">
               <hr class="h-0.5 bg-[#8E8E8E] flex-1" />
@@ -266,12 +266,21 @@
               <input type="text" name="apartment" placeholder="Apartment, suite, etc (optional)" class="mt-4 w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
 
               <!-- City, ZIP and State -->
-              <div class="mt-4 grid grid-cols-3 gap-4">
-                <input type="text" name="city" placeholder="City" class="col-span-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required />
-                <div class="relative col-span-1">
+              <!-- City, ZIP and State -->
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- City Input -->
+                <input type="text" name="city" placeholder="City" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required />
+
+                <!-- ZIP Code Select (Mobile: Full width, Desktop: 1 column) -->
+                <div class="relative col-span-1 w-full">
                   <select class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
                     <option value="" disabled selected>ZIP code</option>
-                    <!-- Add ZIP codes here -->
+                    <option value="10001">10001</option>
+                    <option value="20001">20001</option>
+                    <option value="30301">30301</option>
+                    <option value="94101">94101</option>
+                    <option value="75201">75201</option>
+                    <!-- Add more ZIP codes here as needed -->
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4">
                     <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,10 +288,17 @@
                     </svg>
                   </div>
                 </div>
-                <div class="relative col-span-1">
+
+                <!-- State Select (Mobile: Full width, Desktop: 1 column) -->
+                <div class="relative col-span-1 w-full">
                   <select class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
                     <option value="" disabled selected>State</option>
-                    <!-- Add states here -->
+                    <option value="NY">New York</option>
+                    <option value="CA">California</option>
+                    <option value="TX">Texas</option>
+                    <option value="FL">Florida</option>
+                    <option value="IL">Jakarta</option>
+                    <!-- Add more states here as needed -->
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4">
                     <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,9 +407,10 @@
                     <input type="text" placeholder="Card number" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" placeholder="Expiration date (MM/YY)" class="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
-                    <input type="text" placeholder="Security code" class="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+                    <input type="text" placeholder="Expiration date (MM/YY)" class="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full" />
+                    <input type="text" placeholder="Security code" class="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full" />
                   </div>
+
                   <div>
                     <input type="text" placeholder="Name on card" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
                   </div>
@@ -425,7 +442,9 @@
               </div>
 
               <!-- Pay Now Button -->
-              <button type="submit" class="mt-6 w-full bg-primary text-white py-2.5 px-6 rounded-full hover:bg-opacity-90 transition-colors text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+              <button
+                type="submit"
+                class="mt-6 w-full bg-primary text-white py-2.5 px-6 rounded-full hover:bg-opacity-90 transition-colors text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 md:block hidden">
                 Pay now
               </button>
             </div>
@@ -578,12 +597,16 @@
       </div>
 
       <!-- Mobile Checkout Fixed Bottom -->
+      <!-- Mobile Checkout Fixed Bottom -->
       <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-4 md:hidden">
         <div class="flex justify-between items-center mb-2">
           <span class="text-sm">Total</span>
-          <div>
-            <span class="text-sm text-gray-600 mr-2">USD</span>
-            <span class="text-lg font-medium">$175.20</span>
+          <div class="flex items-center">
+            <div>
+              <span class="text-sm text-gray-600 mr-2">USD</span>
+              <span class="text-lg font-medium">$175.20</span>
+            </div>
+            <span class="text-gray-400 line-through text-sm ml-1">$219.00</span>
           </div>
         </div>
         <button type="submit" class="w-full bg-primary text-white py-3 px-6 rounded-full hover:bg-opacity-90 transition-colors text-base font-medium">Continue to Payment</button>

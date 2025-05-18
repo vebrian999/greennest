@@ -22,7 +22,7 @@
           <div class="hidden md:flex flex-grow justify-center font-light">
             <ul class="flex space-x-8">
               <li><a href="./index.html" class="text-primary transition-colors">Home</a></li>
-              <li><a href="#care" class="text-primary transition-colors">Care Tools</a></li>
+              <li><a href="./list-product.html" class="text-primary transition-colors">Shop All</a></li>
               <li><a href="#gifts" class="text-primary transition-colors">Gifts</a></li>
               <li><a href="#learn" class="text-primary transition-colors">Learn</a></li>
               <li><a href="#about" class="text-primary transition-colors">About Us</a></li>
@@ -103,7 +103,7 @@
           <!-- Navigation Links -->
           <ul class="py-2 border-b border-gray-200">
             <li><a href="./index.html" class="block px-4 py-2 text-primary hover:bg-gray-50">Home</a></li>
-            <li><a href="#care" class="block px-4 py-2 text-primary hover:bg-gray-50">Care Tools</a></li>
+            <li><a href="./list-product.html" class="block px-4 py-2 text-primary hover:bg-gray-50">Shop All</a></li>
             <li><a href="#gifts" class="block px-4 py-2 text-primary hover:bg-gray-50">Gifts</a></li>
             <li><a href="#learn" class="block px-4 py-2 text-primary hover:bg-gray-50">Learn</a></li>
             <li><a href="#about" class="block px-4 py-2 text-primary hover:bg-gray-50">About Us</a></li>
@@ -237,22 +237,22 @@
                 <div class="w-full md:w-1/2 md:pl-10">
                   <!-- Product Title and Price -->
                   <div class="flex justify-between items-start mb-6">
-                    <h2 class="text-3xl text-primary">Snake Plant Laurentii</h2>
+                    <h2 class="text-lg md:text-3xl text-primary">Snake Plant Laurentii</h2>
                     <div class="text-end">
-                      <span class="text-2xl font-medium mr-2 text-primary">$349.99</span>
-                      <span class="text-gray-500 line-through">$399.99</span>
+                      <span class="text-end text-sm md:text-2xl font-medium mr-0.5 md:mr-2 text-primary">$349.99</span>
+                      <span class="text-gray-500 line-through md:text-base text-xs">$399.99</span>
                     </div>
                   </div>
 
                   <!-- Product Description -->
-                  <p class="text-gray-700 mb-6">With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.</p>
+                  <p class="text-gray-700 mb-6 md:text-base text-sm">With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.</p>
 
                   <!-- Stock Info -->
-                  <p class="text-gray-600 mb-6">Stock: 999</p>
+                  <p class="text-gray-600 mb-6 md:text-base text-sm">Stock: 999</p>
 
                   <!-- Color Selection -->
                   <div class="mb-8">
-                    <h3 class="text-base font-medium mb-3 text-primary">CHOOSE POT COLOR:</h3>
+                    <h3 class="text-base font-medium mb-3 text-primary md:text-base text-sm">CHOOSE POT COLOR:</h3>
                     <div class="flex space-x-3">
                       <button class="w-10 h-10 bg-[#626A70] rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#626A70]"></button>
                       <button class="w-10 h-10 bg-[#C78356] rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C78356]"></button>
@@ -289,7 +289,7 @@
                     <!-- Detail & Care Section -->
                     <div class="border-b border-gray-200">
                       <button type="button" class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 hover:bg-gray-100 group" aria-controls="dropdown-1" data-collapse-toggle="dropdown-1">
-                        <span class="flex-1 text-left whitespace-nowrap text-black font-medium">DETAIL & CARE</span>
+                        <span class="flex-1 text-left whitespace-nowrap text-black font-medium md:text-base text-sm">DETAIL & CARE</span>
                         <svg sidebar-toggle-item class="w-6 h-6 transition-transform duration-300" fill="none" stroke="#8E8E8E" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
@@ -318,7 +318,7 @@
                     <!-- What's Included Section -->
                     <div class="border-b border-gray-200">
                       <button type="button" class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 hover:bg-gray-100 group" aria-controls="dropdown-2" data-collapse-toggle="dropdown-2">
-                        <span class="flex-1 text-left whitespace-nowrap text-black font-medium">WHAT'S INCLUDED</span>
+                        <span class="flex-1 text-left whitespace-nowrap text-black font-medium md:text-base text-sm">WHAT'S INCLUDED</span>
                         <svg sidebar-toggle-item class="w-6 h-6 transition-transform duration-300" fill="none" stroke="#8E8E8E" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
@@ -413,7 +413,8 @@
         <!-- description -->
         <section class="bg-[#F0F8E7]">
           <div class="mx-auto container px-2 md:px-16">
-            <div class="md:flex flex-col-reverse flex md:py-0 py-4 md:items-start md:justify-between md:space-x-10">
+            <div class="md:flex md:flex-row flex-col-reverse md:space-x-10 space-y-6 py-4">
+              <!-- Text Section -->
               <div class="md:w-1/2 space-y-6 pt-10">
                 <h1 class="text-xl md:text-2xl">Description</h1>
                 <div class="space-y-4">
@@ -438,8 +439,9 @@
                   <p>Snake Plant, Mother-in-law's Tongue, Saint George's Sword, Viper’s Bowstring Hemp</p>
                 </div>
               </div>
-              <div class="md:w-1/2">
-                <img src="./src/img/main-img-product.png" alt="" />
+              <!-- Image Section -->
+              <div class="md:w-1/2 flex justify-center md:justify-start">
+                <img src="./src/img/main-img-product.png" alt="" class="w-full md:w-auto" />
               </div>
             </div>
           </div>
