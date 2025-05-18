@@ -131,36 +131,6 @@
         </div>
       </nav>
     </header>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        // Search functionality
-        const searchTrigger = document.querySelector(".search-trigger");
-        const searchContainer = document.querySelector(".search-container");
-        let isSearchOpen = false;
-
-        searchTrigger.addEventListener("click", () => {
-          isSearchOpen = !isSearchOpen;
-          if (isSearchOpen) {
-            searchContainer.style.width = "240px";
-            searchContainer.querySelector("input").focus();
-          } else {
-            searchContainer.style.width = "0";
-          }
-        });
-
-        // Mobile menu functionality
-        const mobileMenuButton = document.getElementById("mobile-menu-button");
-        const mobileMenu = document.getElementById("mobile-menu");
-
-        mobileMenuButton.addEventListener("click", () => {
-          mobileMenu.classList.toggle("hidden");
-        });
-
-        // Handle scroll events for navbar
-        const header = document.querySelector("header");
-        let lastScroll = 0;
-      });
-    </script>
 
     <main class="pt-16">
       <div id="content">
@@ -192,7 +162,7 @@
               <div class="cards-container">
                 <div class="flex space-x-6 min-w-max pb-4">
                   <!-- Card 1 -->
-                  <a href="./detail-product.html" class="w-[369px] flex-shrink-0">
+                  <div href="./detail-product.html" class="w-[369px] flex-shrink-0">
                     <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-[544px]">
                       <div class="relative">
                         <!-- Image carousel -->
@@ -200,9 +170,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (3).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (5).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -213,13 +183,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -246,7 +216,7 @@
                         </div>
                       </div>
                     </div>
-                  </a>
+                  </div>
                   <!-- Card 2 -->
                   <div class="w-[369px] flex-shrink-0">
                     <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-[544px]">
@@ -256,9 +226,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (2).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (1).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -269,13 +239,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Sansevieria Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$20.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -312,9 +282,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (3).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (1).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -325,13 +295,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -368,8 +338,8 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (1).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                             <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
@@ -381,13 +351,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Monstera Deliciosa</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$35.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -427,9 +397,9 @@
 
                           <!-- Existing carousel content -->
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (2).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (1).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -440,13 +410,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Ficus Elastica</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$40.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -500,9 +470,9 @@
                           <!-- For New Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-secondary text-white px-3 py-1 rounded-full text-sm font-medium">New</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (2).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -513,13 +483,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Aloe Vera</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$15.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -556,9 +526,9 @@
                           <!-- For New Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-secondary text-white px-3 py-1 rounded-full text-sm font-medium">New</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (2).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -569,13 +539,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Cactus</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$10.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -625,13 +595,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Philodendron Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$25.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -668,9 +638,9 @@
                           <!-- For New Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-secondary text-white px-3 py-1 rounded-full text-sm font-medium">New</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (5).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -681,13 +651,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
-                            <h3 class="text-xl text-primary">Snake Plant</h3>
+                            <h3 class="text-xl text-primary">Bamboo Palm</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -737,13 +707,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
-                          <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                          <p class="text-primary font-medium text-lg">$28.99</p>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -797,9 +767,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (5).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -810,13 +780,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -853,9 +823,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (2).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (4).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -866,13 +836,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -909,9 +879,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (3).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
                             <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (1).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -922,13 +892,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -965,9 +935,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
-                            <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (6).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (3).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (2).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -978,13 +948,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -1021,9 +991,9 @@
                           <!-- For Best Seller Bundle -->
                           <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
                           <div class="carousel-slides h-full">
-                            <img src="./src/img/plant (1).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+                            <img src="./src/img/plant (3).png" alt="Plant view 1" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
                             <img src="./src/img/plant (2).png" alt="Plant view 2" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
-                            <img src="./src/img/plant (3).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
+                            <img src="./src/img/plant (1).png" alt="Plant view 3" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out opacity-0" />
                           </div>
                           <!-- Carousel dots -->
                           <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
@@ -1034,13 +1004,13 @@
                         </div>
                       </div>
                       <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <a href="./detail-product.html" class="flex justify-between items-start mb-4">
                           <div>
                             <h3 class="text-xl text-primary">Snake Plant</h3>
                             <p class="text-gray-600 text-sm mt-1">Easy care indoor plant</p>
                           </div>
                           <p class="text-primary font-medium text-lg">$24.99</p>
-                        </div>
+                        </a>
                         <!-- Rating stars -->
                         <div class="flex items-center space-x-1">
                           <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
@@ -1073,60 +1043,6 @@
             </div>
           </div>
         </section>
-        <script>
-          document.addEventListener("DOMContentLoaded", () => {
-            // Carousel functionality
-            const carousels = document.querySelectorAll(".carousel-container");
-
-            carousels.forEach((carousel) => {
-              const slides = carousel.querySelectorAll(".carousel-slides img");
-              const dots = carousel.querySelectorAll(".carousel-dot");
-              let currentSlide = 0;
-              let autoplayInterval;
-
-              // Function to show specific slide
-              const showSlide = (index) => {
-                slides.forEach((slide) => slide.classList.add("opacity-0"));
-                dots.forEach((dot) => {
-                  dot.classList.remove("opacity-100");
-                  dot.classList.add("opacity-50");
-                });
-
-                slides[index].classList.remove("opacity-0");
-                dots[index].classList.remove("opacity-50");
-                dots[index].classList.add("opacity-100");
-              };
-
-              // Initialize dots click handlers
-              dots.forEach((dot, index) => {
-                dot.addEventListener("click", () => {
-                  currentSlide = index;
-                  showSlide(currentSlide);
-                  resetAutoplay();
-                });
-              });
-
-              // Autoplay functionality
-              const nextSlide = () => {
-                currentSlide = (currentSlide + 1) % slides.length;
-                showSlide(currentSlide);
-              };
-
-              const resetAutoplay = () => {
-                clearInterval(autoplayInterval);
-                autoplayInterval = setInterval(nextSlide, 3000); // Change slide every 3 seconds
-              };
-
-              // Initialize carousel
-              showSlide(0);
-              resetAutoplay();
-
-              // Pause autoplay on hover
-              carousel.addEventListener("mouseenter", () => clearInterval(autoplayInterval));
-              carousel.addEventListener("mouseleave", resetAutoplay);
-            });
-          });
-        </script>
 
         <section class="py-12">
           <div class="mx-auto px-2 md:px-16 container">
@@ -1215,6 +1131,7 @@
             </div>
           </div>
         </article>
+
         <!-- Testimonial Section -->
         <section class="py-12 bg-[#F0F8E7] bg-opacity-60">
           <div class="mx-auto container px-2 md:px-16">
@@ -1450,39 +1367,6 @@
           </div>
         </section>
 
-        <!-- JavaScript for Slider Functionality -->
-        <script>
-          // Handle slider functionality
-          let currentSlide = 0;
-          const slides = document.querySelectorAll("#testimonialSlider > div");
-          const totalSlides = slides.length;
-
-          const nextButton = document.getElementById("next");
-          const prevButton = document.getElementById("prev");
-
-          function showSlide(index) {
-            if (index >= totalSlides) {
-              currentSlide = 0; // Loop back to the first slide
-            } else if (index < 0) {
-              currentSlide = totalSlides - 1; // Go to the last slide
-            } else {
-              currentSlide = index;
-            }
-            const offset = -currentSlide * (slides[0].offsetWidth + 16); // 16px is the margin between cards
-            document.getElementById("testimonialSlider").style.transform = `translateX(${offset}px)`;
-          }
-
-          // Next button click event
-          nextButton.addEventListener("click", () => {
-            showSlide(currentSlide + 1);
-          });
-
-          // Previous button click event
-          prevButton.addEventListener("click", () => {
-            showSlide(currentSlide - 1);
-          });
-        </script>
-
         <!-- Subscribe Section -->
         <section class="py-12">
           <div class="mx-auto container px-2 md:px-16">
@@ -1692,4 +1576,5 @@
       </div>
     </footer>
   </body>
+  <script src="./src/script.js"></script>
 </html>
