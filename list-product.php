@@ -1,3 +1,117 @@
+<?php
+require_once 'config/db.php';
+
+$where = [];
+$params = [];
+$types = '';
+
+// PLANT TYPE
+if (!empty($_GET['plant_type'])) {
+    $plantTypes = $_GET['plant_type'];
+    $in = implode(',', array_fill(0, count($plantTypes), '?'));
+    $where[] = "p.category_name IN ($in)";
+    $params = array_merge($params, $plantTypes);
+    $types .= str_repeat('s', count($plantTypes));
+}
+
+// PRICE RANGE
+if (!empty($_GET['price_range'])) {
+    $priceWhere = [];
+    foreach ($_GET['price_range'] as $range) {
+        if ($range == 'under_20') $priceWhere[] = 'p.price < 20';
+        if ($range == '20_50') $priceWhere[] = '(p.price >= 20 AND p.price <= 50)';
+        if ($range == '50_100') $priceWhere[] = '(p.price > 50 AND p.price <= 100)';
+        if ($range == 'above_100') $priceWhere[] = 'p.price > 100';
+    }
+    if ($priceWhere) $where[] = '(' . implode(' OR ', $priceWhere) . ')';
+}
+
+// PLANT SIZE
+if (!empty($_GET['plant_size'])) {
+    $sizes = $_GET['plant_size'];
+    $in = implode(',', array_fill(0, count($sizes), '?'));
+    $where[] = "p.plant_size IN ($in)";
+    $params = array_merge($params, $sizes);
+    $types .= str_repeat('s', count($sizes));
+}
+
+// PET FRIENDLY
+if (!empty($_GET['pet_friendly'])) {
+    $pf = $_GET['pet_friendly'];
+    $in = implode(',', array_fill(0, count($pf), '?'));
+    $where[] = "p.pet_friendly IN ($in)";
+    $params = array_merge($params, $pf);
+    $types .= str_repeat('s', count($pf));
+}
+
+// PRODUCT LABELS
+if (!empty($_GET['product_label'])) {
+    $labels = $_GET['product_label'];
+    $labelWhere = [];
+    foreach ($labels as $label) {
+        if ($label == 'NEW ARRIVAL') {
+            $labelWhere[] = "p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        } elseif ($label == 'POPULAR') {
+            $labelWhere[] = "((SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) >= 10 OR (SELECT COUNT(*) FROM product_likes l WHERE l.product_id = p.id) >= 10)";
+        } else {
+            $labelWhere[] = "p.product_label = ?";
+            $params[] = $label;
+            $types .= 's';
+        }
+    }
+    if ($labelWhere) $where[] = '(' . implode(' OR ', $labelWhere) . ')';
+}
+
+// DIFFICULTY
+if (!empty($_GET['difficulty'])) {
+    $diff = $_GET['difficulty'];
+    $in = implode(',', array_fill(0, count($diff), '?'));
+    $where[] = "p.difficulty IN ($in)";
+    $params = array_merge($params, $diff);
+    $types .= str_repeat('s', count($diff));
+}
+
+// RATING (ambil rata-rata dari tabel reviews)
+$ratingFilter = '';
+if (!empty($_GET['rating'])) {
+    $ratingWhere = [];
+    foreach ($_GET['rating'] as $r) {
+        if ($r == '5') $ratingWhere[] = 'avg_rating = 5';
+        if ($r == '4') $ratingWhere[] = 'avg_rating >= 4';
+        if ($r == '3') $ratingWhere[] = 'avg_rating >= 3';
+    }
+    if ($ratingWhere) $ratingFilter = '(' . implode(' OR ', $ratingWhere) . ')';
+}
+
+// SQL Query
+$sql = "SELECT p.*, pi.image_url,
+            (SELECT ROUND(AVG(r.rating),1) FROM reviews r WHERE r.product_id = p.id) as avg_rating,
+            (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as review_count,
+            (SELECT COUNT(*) FROM product_likes l WHERE l.product_id = p.id) as like_count
+        FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1";
+
+if ($where || $ratingFilter) {
+    $sql .= " WHERE ";
+    $filters = [];
+    if ($where) $filters[] = implode(' AND ', $where);
+    if ($ratingFilter) $filters[] = $ratingFilter;
+    $sql .= implode(' AND ', $filters);
+}
+$sql .= " ORDER BY p.created_at DESC";
+
+$stmt = $conn->prepare($sql);
+if ($params) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
+
+$products = [];
+while ($row = $result->fetch_assoc()) {
+    $products[] = $row;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -43,39 +157,16 @@
       <div id="content" class="flex-1">
         <section>
           <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <!-- Card 1 -->
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-            <?php include './component/card-main.php'; ?>
-
+            <?php foreach ($products as $product): ?>
+              <?php
+                // Kirim data produk ke card-main.php
+                $cardProduct = $product;
+                include './component/card-main.php';
+              ?>
+            <?php endforeach; ?>
           </div>
         </section>
 
-        <!-- PAGINATION -->
-        <div class="flex items-center justify-center md:justify-center gap-x-2 md:gap-x-3 mt-8 md:mt-10 lg:mt-12">
-          <button type="button" class="bg-slate-100 text-gray-700 font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="18" viewBox="0 0 10 18" fill="none">
-              <path d="M8.75 16.5L1.25 9L8.75 1.5" stroke="#0F0F0F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </button>
-          <button type="button" class="bg-primary text-white font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">1</button>
-          <button type="button" class="bg-slate-100 text-gray-700 font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">2</button>
-          <button type="button" class="bg-slate-100 text-gray-700 font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">3</button>
-          <button type="button" class="bg-slate-100 text-gray-700 font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">...</button>
-          <button type="button" class="bg-slate-100 text-gray-700 font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">13</button>
-          <button type="button" class="bg-slate-100 text-gray-700 font-semibold text-sm md:text-base h-[40px] md:h-[46px] lg:h-[50px] w-[40px] md:w-[46px] lg:w-[50px] inline-flex justify-center items-center border rounded-md">
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="18" viewBox="0 0 10 18" fill="none">
-              <path d="M1.25 1.5L8.75 9L1.25 16.5" stroke="#0F0F0F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </button>
-        </div>
       </div>
     </main>
 

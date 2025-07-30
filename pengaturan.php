@@ -790,11 +790,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_profile_image'
               <form class="mt-8 space-y-4" method="post">
                 <h3 class="font-semibold text-primary">Tambah Alamat Baru</h3>
                 <input type="text" name="address" placeholder="Alamat lengkap" class="w-full px-4 py-3 rounded-2xl border border-primary/20 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent bg-white/90 text-gray-700" required />
-                <label class="inline-flex items-center">
+                  <div class="flex items-center justify-between mt-4">
+                  <label class="inline-flex items-center">
                   <input type="checkbox" name="is_default" class="form-checkbox text-primary" />
                   <span class="ml-2 text-sm text-gray-700">Jadikan Default</span>
                 </label>
                 <button type="submit" name="add_address" class="px-6 py-3 bg-primary text-white rounded-2xl font-semibold shadow-md hover:bg-secondary transition-colors">Tambah Alamat</button>
+              </div>
               </form>
             </div>
           </div>

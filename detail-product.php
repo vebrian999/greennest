@@ -1,3 +1,52 @@
+<?php
+require_once 'config/db.php';
+
+// Ambil id produk dari URL
+$productId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$product = null;
+$productImages = [];
+
+// Ambil data produk dan gambar dari database
+if ($productId) {
+    // Ambil produk
+    $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+    $stmt->bind_param('i', $productId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $product = $result->fetch_assoc();
+
+    // Ambil gambar produk
+    $imgStmt = $conn->prepare("SELECT image_url, is_main FROM product_images WHERE product_id = ? ORDER BY is_main DESC, id ASC");
+    $imgStmt->bind_param('i', $productId);
+    $imgStmt->execute();
+    $imgResult = $imgStmt->get_result();
+    while ($row = $imgResult->fetch_assoc()) {
+        $productImages[] = $row['image_url'];
+    }
+}
+
+// Ambil jumlah like produk
+$likeCount = 0;
+$userLiked = false;
+if ($productId) {
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM product_likes WHERE product_id = ?");
+    $stmt->bind_param('i', $productId);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $likeCount = $res->fetch_assoc()['total'] ?? 0;
+
+    // Cek apakah user sudah like
+    session_start();
+    $userId = $_SESSION['user_id'] ?? 0;
+    if ($userId) {
+        $stmt2 = $conn->prepare("SELECT id FROM product_likes WHERE product_id = ? AND user_id = ?");
+        $stmt2->bind_param('ii', $productId, $userId);
+        $stmt2->execute();
+        $res2 = $stmt2->get_result();
+        $userLiked = $res2->num_rows > 0;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -19,28 +68,25 @@
         <section>
           <div class="mx-auto container px-8 md:px-20">
             <div class="py-10">
+              <?php if (!$product): ?>
+                <div class="text-center py-16">
+                  <h2 class="text-2xl font-bold text-gray-900 mb-4">Produk tidak ditemukan</h2>
+                  <p class="text-gray-600 mb-4">Produk yang Anda cari tidak tersedia.</p>
+                </div>
+              <?php else: ?>
               <div class="flex flex-wrap -mx-4 justify-between">
                 <!-- Product Images Section -->
                 <div class="w-full md:w-1/2 mb-8">
                   <div class="flex gap-4">
                     <!-- Thumbnails -->
                     <div class="flex flex-col gap-y-4">
-                      <img src="./src/img/main-img-product.png" alt="Thumbnail 1" class="size-16 sm:size-16 object-cover rounded-full cursor-pointer opacity-60 hover:opacity-100 transition duration-300" onclick="changeImage(this.src)" />
-                      <img
-                        src="./src/img/main-img-product (1).png"
-                        alt="Thumbnail 2"
-                        class="size-16 sm:size-16 object-cover rounded-full cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
-                        onclick="changeImage(this.src)" />
-                      <img
-                        src="./src/img/main-img-product (2).png"
-                        alt="Thumbnail 3"
-                        class="size-16 sm:size-16 object-cover rounded-full cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
-                        onclick="changeImage(this.src)" />
+                      <?php foreach ($productImages as $idx => $img): ?>
+                        <img src="<?php echo htmlspecialchars($img); ?>" alt="Thumbnail <?php echo $idx+1; ?>" class="size-16 sm:size-16 object-cover rounded-full cursor-pointer opacity-60 hover:opacity-100 transition duration-300" onclick="changeImage(this.src)" />
+                      <?php endforeach; ?>
                     </div>
-
                     <!-- Main Image -->
                     <div class="flex-1">
-                      <img src="./src/img/main-img-product.png" alt="Product" class="w-full h-auto rounded-lg shadow-md" id="mainImage" />
+                      <img src="<?php echo htmlspecialchars($productImages[0] ?? './src/img/main-img-product.png'); ?>" alt="Product" class="w-full h-auto rounded-lg shadow-md" id="mainImage" />
                     </div>
                   </div>
 
@@ -87,18 +133,36 @@
                 <div class="w-full md:w-1/2 md:pl-10">
                   <!-- Product Title and Price -->
                   <div class="flex justify-between items-start mb-6">
-                    <h2 class="text-lg md:text-3xl text-primary">Snake Plant Laurentii</h2>
+                    <h2 class="text-lg md:text-3xl text-primary"><?php echo htmlspecialchars($product['name']); ?></h2>
                     <div class="text-end">
-                      <span class="text-end text-sm md:text-2xl font-medium mr-0.5 md:mr-2 text-primary">$349.99</span>
-                      <span class="text-gray-500 line-through md:text-base text-xs">$399.99</span>
+                      <span class="text-end text-sm md:text-2xl font-medium mr-0.5 md:mr-2 text-primary">
+                        $<?php echo number_format($product['price'], 2); ?>
+                      </span>
+                      <?php if (!empty($product['price_old'])): ?>
+                        <span class="text-gray-500 line-through md:text-base text-xs">
+                          $<?php echo number_format($product['price_old'], 2); ?>
+                        </span>
+                      <?php endif; ?>
                     </div>
                   </div>
 
                   <!-- Product Description -->
-                  <p class="text-gray-700 mb-6 md:text-base text-sm">With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.</p>
+                  <?php
+function short_paragraph($text, $maxWords = 20) {
+  $text = strip_tags($text);
+  $words = preg_split('/\s+/', $text);
+  if (count($words) > $maxWords) {
+    return implode(' ', array_slice($words, 0, $maxWords)) . '.';
+  }
+  return implode(' ', $words);
+}
+?>
+<p class="text-gray-700 mb-6 md:text-base text-sm">
+  <?php echo htmlspecialchars(short_paragraph($product['description'] ?? '')); ?>
+</p>
 
                   <!-- Stock Info -->
-                  <p class="text-gray-600 mb-6 md:text-base text-sm">Stock: 999</p>
+                  <p class="text-gray-600 mb-6 md:text-base text-sm">Stock: <?php echo htmlspecialchars($product['stock']); ?></p>
 
                   <!-- Color Selection -->
                   <div class="mb-8">
@@ -136,45 +200,49 @@
                     <!-- Like Button with Heart Icon and Count -->
                     <button id="like-btn" class="flex items-center space-x-1 rounded-full bg-pink-200 text-white px-3 py-2.5 text-sm font-medium transition duration-200">
                       <!-- Heart Icon -->
-                      <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition duration-200" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                      <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition duration-200" fill="<?php echo $userLiked ? '#ef4444' : 'none'; ?>" viewBox="0 0 24 24" stroke="<?php echo $userLiked ? '#ef4444' : 'white'; ?>" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                       <!-- Like Count -->
-                      <span id="like-count" class="font-semibold text-base text-white">10</span>
+                      <span id="like-count" class="font-semibold text-base <?php echo $userLiked ? 'text-red-500' : 'text-white'; ?>"><?php echo $likeCount; ?></span>
                     </button>
+
+                    <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const likeBtn = document.getElementById('like-btn');
+  const likeCount = document.getElementById('like-count');
+  const likeIcon = document.getElementById('like-icon');
+  let liked = <?php echo $userLiked ? 'true' : 'false'; ?>;
+  let productId = <?php echo $productId; ?>;
+
+  likeBtn.addEventListener('click', function () {
+    fetch('product-like.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'product_id=' + productId
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        liked = data.liked;
+        likeCount.textContent = data.total;
+        if (liked) {
+          likeIcon.setAttribute('fill', '#ef4444');
+          likeIcon.setAttribute('stroke', '#ef4444');
+          likeCount.classList.remove('text-white');
+          likeCount.classList.add('text-red-500');
+        } else {
+          likeIcon.setAttribute('fill', 'none');
+          likeIcon.setAttribute('stroke', 'white');
+          likeCount.classList.remove('text-red-500');
+          likeCount.classList.add('text-white');
+        }
+      }
+    });
+  });
+});
+</script>
                   </div>
-
-                  <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                      const likeBtn = document.getElementById("like-btn");
-                      const likeCount = document.getElementById("like-count");
-                      const likeIcon = document.getElementById("like-icon");
-
-                      let liked = false;
-                      const initialCount = parseInt(likeCount.textContent, 10) || 0;
-
-                      likeBtn.addEventListener("click", function () {
-                        liked = !liked;
-
-                        if (liked) {
-                          // Aktif: merah solid
-                          likeIcon.setAttribute("fill", "#ef4444"); // red-500
-                          likeIcon.setAttribute("stroke", "#ef4444");
-                          likeCount.classList.remove("text-white");
-                          likeCount.classList.add("text-red-500");
-                        } else {
-                          // Nonaktif: putih outline
-                          likeIcon.setAttribute("fill", "none");
-                          likeIcon.setAttribute("stroke", "white");
-                          likeCount.classList.remove("text-red-500");
-                          likeCount.classList.add("text-white");
-                        }
-
-                        // Update count
-                        likeCount.textContent = liked ? initialCount + 1 : initialCount;
-                      });
-                    });
-                  </script>
 
                   <!-- Product Accordion Container -->
                   <div class="border-t border-gray-200">
@@ -188,21 +256,23 @@
                       </button>
                       <div id="dropdown-1" class="hidden overflow-hidden transition-all duration-300" style="max-height: 0">
                         <ul class="py-2 space-y-2">
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Snake Plant Laurentii (Dracaena trifasciata 'Laurentii')</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Low maintenance and highly adaptable</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Air-purifying capabilities</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Tolerates low light conditions</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Drought resistant</p>
-                          </li>
+                          <?php
+                            $detailCare = !empty($product['detail_care']) ? explode("\n", $product['detail_care']) : [];
+                            if (count($detailCare) === 0 || (count($detailCare) === 1 && trim($detailCare[0]) === '')): ?>
+                              <li class="pl-11 py-2">
+                                <p class="text-gray-500 italic">Detail & Care belum tersedia.</p>
+                              </li>
+                          <?php else:
+                            foreach ($detailCare as $item):
+                              if (trim($item) !== ''): ?>
+                                <li class="pl-11 py-2">
+                                  <p class="text-gray-700">• <?php echo htmlspecialchars($item); ?></p>
+                                </li>
+                          <?php
+                              endif;
+                            endforeach;
+                          endif;
+                          ?>
                         </ul>
                       </div>
                     </div>
@@ -217,24 +287,30 @@
                       </button>
                       <div id="dropdown-2" class="hidden overflow-hidden transition-all duration-300" style="max-height: 0">
                         <ul class="py-2 space-y-2">
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• 1x Snake Plant Laurentii in your chosen size</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Ceramic pot in your selected color</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• Detailed care instructions</p>
-                          </li>
-                          <li class="pl-11 py-2">
-                            <p class="text-gray-700">• 30-day plant health guarantee</p>
-                          </li>
+                          <?php
+                            $whatsIncluded = !empty($product['whats_included']) ? explode("\n", $product['whats_included']) : [];
+                            if (count($whatsIncluded) === 0 || (count($whatsIncluded) === 1 && trim($whatsIncluded[0]) === '')): ?>
+                              <li class="pl-11 py-2">
+                                <p class="text-gray-500 italic">What's Included belum tersedia.</p>
+                              </li>
+                          <?php else:
+                            foreach ($whatsIncluded as $item):
+                              if (trim($item) !== ''): ?>
+                                <li class="pl-11 py-2">
+                                  <p class="text-gray-700">• <?php echo htmlspecialchars($item); ?></p>
+                                </li>
+                          <?php
+                              endif;
+                            endforeach;
+                          endif;
+                          ?>
                         </ul>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+              <?php endif; ?>
             </div>
 
             <!-- dropdown script -->
@@ -310,258 +386,64 @@
               <div class="md:w-1/2 space-y-6 pt-10">
                 <h1 class="text-xl md:text-2xl">Description</h1>
                 <div class="space-y-4">
-                  <p>
-                    Snake Plant Laurentii is a tough yet elegant houseplant, recognized for its tall, upright foliage with deep green centers and golden-yellow outlines. It grows well in both bright spots and dim corners, making it a
-                    versatile choice for any room, whether at home or at work.
-                  </p>
-                  <p>Originating from tropical West Africa, this plant is well-loved for its ability to purify the air and its impressive durability. It's an excellent choice for plant beginners or anyone with a busy lifestyle.</p>
-                </div>
-                <div class="space-y-1.5">
-                  <p>Additional Resources:</p>
-                  <ul class="list-disc pl-4">
-                    <li>View Snake Plant Care Guide</li>
-                  </ul>
+                  <?php
+$desc = $product['description'] ?? '';
+$descParts = explode('---resources---', $desc);
+$mainDesc = trim($descParts[0]);
+$resources = isset($descParts[1]) ? array_filter(array_map('trim', explode("\n", $descParts[1]))) : [];
+?>
+<div class="space-y-4">
+  <p>
+    <?php echo htmlspecialchars($mainDesc ?: 'Deskripsi produk belum tersedia.'); ?>
+  </p>
+</div>
+<?php if (!empty($resources)): ?>
+  <div class="space-y-1.5">
+    <p>Additional Resources:</p>
+    <ul class="list-disc pl-4">
+      <?php foreach ($resources as $resource): ?>
+        <li><?php echo htmlspecialchars($resource); ?></li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
                 </div>
                 <div class="space-y-1.5">
                   <h1 class="text-xl md:text-2xl">Botanical Name</h1>
-                  <p class="italic font-extralight">Sansevieria trifasciata 'Laurentii'</p>
+                  <p class="italic font-extralight">
+                    <?php echo htmlspecialchars($product['botanical_name'] ?? '-'); ?>
+                  </p>
                 </div>
                 <div class="space-y-1.5">
                   <h1 class="text-xl md:text-2xl">Common Name(s)</h1>
-                  <p>Snake Plant, Mother-in-law's Tongue, Saint George's Sword, Viper’s Bowstring Hemp</p>
+                  <p>
+                    <?php echo htmlspecialchars($product['common_names'] ?? '-'); ?>
+                  </p>
                 </div>
               </div>
               <!-- Image Section -->
               <div class="md:w-1/2 flex justify-center md:justify-start">
-                <img src="./src/img/main-img-product.png" alt="" class="w-full md:w-auto" />
+                <img src="<?php echo htmlspecialchars($productImages[0] ?? './src/img/main-img-product.png'); ?>" alt="" class="w-full md:w-auto" />
               </div>
             </div>
           </div>
         </section>
 
-        <!-- section comment and ratings -->
-        <section class="mx-auto container px-2 md:px-16 py-16">
-          <div class="md:flex md:flex-col gap-8">
-            <!-- Rating Header -->
-            <div class="md:flex items-start justify-between flex-row md:flex-wrap">
-              <!-- Column 1: Overall Rating -->
-              <div class="md:flex md:space-y-0 space-y-5 gap-6 w-full sm:w-auto">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <h1 class="text-3xl font-medium">5.0</h1>
-                    <!-- Rating stars -->
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <p class="text-black text-sm">Based on 22 Reviews</p>
-                </div>
-
-                <!-- Column 2: Rating Bars -->
-                <div class="flex gap-2">
-                  <!-- Stars Rating Column -->
-                  <div>
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <!-- Bar Chart Column -->
-                  <div class="flex-1 space-y-2 w-[200px]">
-                    <!-- Tambahkan fixed width -->
-                    <!-- 5 stars -->
-                    <div class="flex items-center gap-2">
-                      <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="bg-secondary h-full" style="width: 73%"></div>
-                      </div>
-                      <span class="text-sm text-gray-600 min-w-[30px]">(16)</span>
-                    </div>
-
-                    <!-- 4 stars -->
-                    <div class="flex items-center gap-2">
-                      <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="bg-secondary h-full" style="width: 9%"></div>
-                      </div>
-                      <span class="text-sm text-gray-600 min-w-[30px]">(2)</span>
-                    </div>
-
-                    <!-- 3 stars -->
-                    <div class="flex items-center gap-2">
-                      <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="bg-secondary h-full" style="width: 9%"></div>
-                      </div>
-                      <span class="text-sm text-gray-600 min-w-[30px]">(2)</span>
-                    </div>
-
-                    <!-- 2 stars -->
-                    <div class="flex items-center gap-2">
-                      <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="bg-secondary h-full" style="width: 4.5%"></div>
-                      </div>
-                      <span class="text-sm text-gray-600 min-w-[30px]">(1)</span>
-                    </div>
-
-                    <!-- 1 star -->
-                    <div class="flex items-center gap-2">
-                      <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="bg-secondary h-full" style="width: 4.5%"></div>
-                      </div>
-                      <span class="text-sm text-gray-600 min-w-[30px]">(1)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Column 3: Review Images -->
-                <div class="flex items-start space-x-3 md:space-x-2 w-full sm:w-auto mt-4 sm:mt-0">
-                  <img class="md:w-20 md:h-14 w-28 object-cover" src="./src/img/image-coment1.png" alt="" />
-                  <img class="md:w-20 md:h-14 w-28 object-cover" src="./src/img/image-coment1 (1).png" alt="" />
-                  <img class="md:w-20 md:h-14 w-28 object-cover" src="./src/img/image-coment1 (2).png" alt="" />
-                </div>
-              </div>
-
-              <!-- Write Review Button -->
-              <div class="mt-6 md:mt-0 flex justify-center">
-                <button class="bg-primary text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors">Write a Review</button>
-              </div>
-            </div>
-
-            <div class="flex items-center text-center border-b-2 justify-start space-x-2 text-secondary py-2 border-secondary w-[90px]">
-              <p>Reviews</p>
-              <p>22</p>
-            </div>
-
-            <!-- Review Comments Section -->
-            <div class="mt-8">
-              <!-- comments component -->
-
-              <?php include('./component/card-comment.php') ?>
-              <?php include('./component/card-comment.php') ?>
-              <?php include('./component/card-comment.php') ?>
-              <?php include('./component/card-comment.php') ?>
-              <?php include('./component/card-comment.php') ?>
-
-              <div class="flex justify-center items-center">
-                <button class="bg-primary text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors">Load More Reviews</button>
-              </div>
-            </div>
-          </div>
-        </section>
+        <?php include('./component/comment-section.php'); ?>
 
         <!-- section people also browsed -->
         <section class="py-12">
           <div class="mx-auto px-2 md:px-16 container">
             <div class="flex justify-between items-center mb-6 text-black">
-              <h2 class="md:text-2xl">People aslo browsed</h2>
+              <h2 class="md:text-2xl">People also browsed</h2>
               <a href="./list-product.php" class="hover:underline md:text-base text-sm">SHOP ALL</a>
             </div>
-
             <div class="relative">
               <div class="cards-container">
-                <?php include('./component/card-slider.php'); ?>
+                <?php
+                  // Kirim $productId ke card-slider.php
+                  include('./component/card-slider.php');
+                ?>
               </div>
             </div>
           </div>
@@ -570,5 +452,8 @@
     </main>
     <!-- footer -->
     <?php include('./component/footer.php'); ?>
+
+    <script src="./src/script.js"></script>
+    <!-- ...existing scripts... -->
   </body>
 </html>
