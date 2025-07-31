@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'config/db.php';
 
 $where = [];
@@ -53,6 +54,10 @@ if (!empty($_GET['product_label'])) {
             $labelWhere[] = "p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
         } elseif ($label == 'POPULAR') {
             $labelWhere[] = "((SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) >= 10 OR (SELECT COUNT(*) FROM product_likes l WHERE l.product_id = p.id) >= 10)";
+        } elseif ($label == 'LIMITED STOCK') {
+            $labelWhere[] = "(p.stock > 0 AND p.stock < 50)";
+        } elseif ($label == 'OUT OF STOCK') {
+            $labelWhere[] = "(p.stock <= 0)";
         } else {
             $labelWhere[] = "p.product_label = ?";
             $params[] = $label;
@@ -122,12 +127,15 @@ while ($row = $result->fetch_assoc()) {
     <link rel="stylesheet" href="./src/style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
     <link rel="icon" href="./src/img/favicon.ico" type="image/x-icon" />
+
   </head>
   <body>
   
   <!-- memasukan navbar -->
     <?php include './component/navbar.php'; ?>
 
+        <?php include('./component/cart-sidebar.php'); ?>
+    
     <!-- hero section -->
     <section class="md:pt-16">
       <div class="relative h-[625px] md:h-[560px] text-white overflow-hidden">

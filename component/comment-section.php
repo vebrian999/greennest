@@ -129,7 +129,11 @@ if ($productId) {
 
               <!-- Write Review Button -->
               <div class="mt-6 md:mt-0 flex justify-center">
-                <button id="showModal" class="bg-primary text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors">Write a Review</button>
+                <?php if (isset($_SESSION['user_id'])): ?>
+                  <button id="showModal" class="bg-primary text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors">Write a Review</button>
+                <?php else: ?>
+                  <a href="login.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>" class="bg-primary text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors text-center">Write a Review</a>
+                <?php endif; ?>
               </div>
             </div>
 
@@ -332,50 +336,66 @@ if ($productId) {
 </div>
 
 <script>
-document.getElementById('writeReviewBtn').onclick = function() {
-  document.getElementById('reviewModal').classList.remove('hidden');
-};
-document.getElementById('closeReviewModal').onclick = function() {
-  document.getElementById('reviewModal').classList.add('hidden');
-};
-// Optional: close modal when clicking outside
-document.getElementById('reviewModal').onclick = function(e) {
-  if (e.target === this) this.classList.add('hidden');
-};
+document.addEventListener('DOMContentLoaded', function() {
+  <?php if (!isset($_SESSION['user_id'])): ?>
+    const showModalBtn = document.getElementById('showModal');
+    if (showModalBtn) {
+      showModalBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'login.php';
+      });
+    }
+  <?php endif; ?>
 
-// Modal single image
-document.querySelectorAll('.review-img-thumb').forEach(img => {
-  img.onclick = function() {
-    document.getElementById('reviewImgModalSrc').src = img.getAttribute('data-img');
-    document.getElementById('reviewImgModal').classList.remove('hidden');
-  };
-});
-document.getElementById('closeReviewImgModal').onclick = function() {
-  document.getElementById('reviewImgModal').classList.add('hidden');
-};
-document.getElementById('reviewImgModal').onclick = function(e) {
-  if (e.target === this) this.classList.add('hidden');
-};
+  let galleryWasOpen = false;
 
-// Modal gallery
-const seeAllBtn = document.getElementById('seeAllImagesBtn');
-if (seeAllBtn) {
-  seeAllBtn.onclick = function() {
-    document.getElementById('reviewGalleryModal').classList.remove('hidden');
+  // Modal single image
+  document.querySelectorAll('.review-img-thumb').forEach(img => {
+    img.onclick = function() {
+      document.getElementById('reviewImgModalSrc').src = img.getAttribute('data-img');
+      document.getElementById('reviewImgModal').classList.remove('hidden');
+      galleryWasOpen = false;
+    };
+  });
+  document.getElementById('closeReviewImgModal').onclick = function() {
+    document.getElementById('reviewImgModal').classList.add('hidden');
+    if (galleryWasOpen) {
+      document.getElementById('reviewGalleryModal').classList.remove('hidden');
+      galleryWasOpen = false;
+    }
   };
-}
-document.getElementById('closeReviewGalleryModal').onclick = function() {
-  document.getElementById('reviewGalleryModal').classList.add('hidden');
-};
-document.getElementById('reviewGalleryModal').onclick = function(e) {
-  if (e.target === this) this.classList.add('hidden');
-};
-// Optional: click gallery image to show single image modal
-document.querySelectorAll('.review-gallery-thumb').forEach(img => {
-  img.onclick = function() {
-    document.getElementById('reviewImgModalSrc').src = img.src;
-    document.getElementById('reviewImgModal').classList.remove('hidden');
+  document.getElementById('reviewImgModal').onclick = function(e) {
+    if (e.target === this) {
+      document.getElementById('reviewImgModal').classList.add('hidden');
+      if (galleryWasOpen) {
+        document.getElementById('reviewGalleryModal').classList.remove('hidden');
+        galleryWasOpen = false;
+      }
+    }
   };
+
+  // Modal gallery
+  document.querySelectorAll('#seeAllImagesBtn').forEach(btn => {
+    btn.onclick = function() {
+      document.getElementById('reviewGalleryModal').classList.remove('hidden');
+    };
+  });
+  document.getElementById('closeReviewGalleryModal').onclick = function() {
+    document.getElementById('reviewGalleryModal').classList.add('hidden');
+  };
+  document.getElementById('reviewGalleryModal').onclick = function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  };
+
+  // Click gallery image to show single image modal
+  document.querySelectorAll('.review-gallery-thumb').forEach(img => {
+    img.onclick = function() {
+      document.getElementById('reviewGalleryModal').classList.add('hidden');
+      document.getElementById('reviewImgModalSrc').src = img.src;
+      document.getElementById('reviewImgModal').classList.remove('hidden');
+      galleryWasOpen = true;
+    };
+  });
 });
 </script>
 

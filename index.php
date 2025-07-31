@@ -1,7 +1,52 @@
 <?php
+require_once __DIR__ . '/config/db.php'; // Tambahkan baris ini
 session_start();
 $isLoggedIn = isset($_SESSION['user']);
 $user = $isLoggedIn ? $_SESSION['user'] : null;
+
+// Query Best Seller
+$bestSellerStmt = $conn->prepare("SELECT p.*, pi.image_url,
+    (SELECT ROUND(AVG(r.rating),1) FROM reviews r WHERE r.product_id = p.id) as avg_rating,
+    (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as review_count,
+    (SELECT COUNT(*) FROM product_likes l WHERE l.product_id = p.id) as like_count
+    FROM products p
+    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
+    WHERE p.is_best_seller = 1 OR p.product_label = 'BEST SELLER'
+    ORDER BY p.created_at DESC
+    LIMIT 10");
+$bestSellerStmt->execute();
+$bestSellerProducts = $bestSellerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Query New Arrival (produk 30 hari terakhir)
+$newArrivalStmt = $conn->prepare("SELECT p.*, pi.image_url,
+    (SELECT ROUND(AVG(r.rating),1) FROM reviews r WHERE r.product_id = p.id) as avg_rating,
+    (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as review_count,
+    (SELECT COUNT(*) FROM product_likes l WHERE l.product_id = p.id) as like_count
+    FROM products p
+    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
+    WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    ORDER BY p.created_at DESC
+    LIMIT 10");
+$newArrivalStmt->execute();
+$newArrivalProducts = $newArrivalStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Query Popular (review_count >= 10 atau like_count >= 10)
+$popularStmt = $conn->prepare("SELECT p.*, pi.image_url,
+    (SELECT ROUND(AVG(r.rating),1) FROM reviews r WHERE r.product_id = p.id) as avg_rating,
+    (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as review_count,
+    (SELECT COUNT(*) FROM product_likes l WHERE l.product_id = p.id) as like_count
+    FROM products p
+    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
+    HAVING review_count >= 10 OR like_count >= 10
+    ORDER BY p.created_at DESC
+    LIMIT 10");
+$popularStmt->execute();
+$popularProducts = $popularStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Ambil 1 artikel terbaru dari tabel articles
+$articleStmt = $conn->prepare("SELECT * FROM articles ORDER BY created_at DESC LIMIT 1");
+$articleStmt->execute();
+$article = $articleStmt->get_result()->fetch_assoc();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,14 +89,15 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
               <h2 class="md:text-2xl text-xl">Best Sellers</h2>
               <a href="./list-product.php" class="hover:underline md:text-base text-sm">SHOP ALL</a>
             </div>
-
             <div class="relative">
-              <div class="cards-container">
+              <div class="cards-container flex gap-4 overflow-x-auto">
 
-                <?php include './component/card-slider.php'; ?>
-
+                <?php foreach ($bestSellerProducts as $cardProduct): ?>
+                  <?php include './component/card.php'; ?>
+                <?php endforeach; ?>
               </div>
             </div>
+          </div>
         </section>
 
         <!-- New Arrivals Section -->
@@ -63,10 +109,10 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
             </div>
 
             <div class="relative">
-              <div class="cards-container">
-
-                <?php include './component/card-slider.php'; ?>
-  
+              <div class="cards-container flex gap-4 overflow-x-auto">
+                <?php foreach ($newArrivalProducts as $cardProduct): ?>
+                  <?php include './component/card.php'; ?>
+                <?php endforeach; ?>
               </div>
             </div>
         </section>
@@ -75,13 +121,15 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
         <section class="py-12">
           <div class="mx-auto md:px-16 px-2 container">
             <div class="flex justify-between items-center mb-6 text-black">
-              <h2 class="md:text-2xl text-xl">Most Gifted</h2>
+              <h2 class="md:text-2xl text-xl">Popular</h2>
               <a href="./list-product.php" class="hover:underline md:text-base text-sm">SHOP ALL</a>
             </div>
 
             <div class="relative">
-              <div class="cards-container">
-                <?php include './component/card-slider.php'; ?>
+              <div class="cards-container flex gap-4 overflow-x-auto">
+                <?php foreach ($popularProducts as $cardProduct): ?>
+                  <?php include './component/card.php'; ?>
+                <?php endforeach; ?>
               </div>
             </div>
         </section>
@@ -145,30 +193,40 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
 
         <article class="py-12">
           <div class="md:flex mx-auto px-2 md:px-16 container">
-            <!-- Wrapper dengan flex-col-reverse untuk mobile -->
             <div class="flex flex-col-reverse md:flex-row md:space-x-7">
               <!-- Text content -->
               <div class="space-y-10 md:w-2/3 mt-8 md:mt-0">
                 <div class="space-y-1">
-                  <p>Care Tips & Guides</p>
-                  <h1 class="text-2xl">Plant Care 101: Your Green Guide to Happy Plants</h1>
+                  <p><?php echo htmlspecialchars($article['category'] ?? 'Care Tips & Guides'); ?></p>
+                  <h1 class="text-2xl"><?php echo htmlspecialchars($article['title'] ?? 'Plant Care 101: Your Green Guide to Happy Plants'); ?></h1>
                 </div>
                 <div class="space-y-12">
                   <p>
-                    Whether you're a new plant parent or looking to level up your indoor jungle game, mastering the basics of plant care is the first step to happy, thriving greenery. From watering wisdom to sunlight strategies, we've
-                    rounded up essential tips to help your plants live their best lives.
+                    <?php echo nl2br(htmlspecialchars($article['excerpt'] ?? 'Whether you\'re a new plant parent or looking to level up your indoor jungle game, mastering the basics of plant care is the first step to happy, thriving greenery.')); ?>
                   </p>
-                  <p>Learn how to read your plant's signals, avoid common mistakes, and build a care routine that works for both you and your leafy companions.</p>
+                  <p>
+                  <?php
+    // Ambil paragraf pertama dari content, batasi 50 kata
+    $content = $article['content'] ?? '';
+    $paragraphs = preg_split('/\r\n|\r|\n/', $content);
+    $second = isset($paragraphs[0]) ? $paragraphs[0] : '';
+    $words = explode(' ', $second);
+    if (count($words) > 30) {
+      $second = implode(' ', array_slice($words, 0, 30)) . '...';
+    }
+    echo nl2br(htmlspecialchars(trim($second)));
+  ?>
+                  </p>
                 </div>
-                <div class="">
-                  <a href="#" class="bg-primary text-white py-3 px-6 rounded-full text-base transition duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg block w-full md:inline-block md:w-auto text-center"
-                    >Read Full Article</a
-                  >
+                <div>
+                  <a href="./detail-article.php?id=<?php echo $article['id'] ?? 1; ?>" class="bg-primary text-white py-3 px-6 rounded-full text-base transition duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg block w-full md:inline-block md:w-auto text-center">
+                    Read Full Article
+                  </a>
                 </div>
               </div>
               <!-- Image section -->
               <div class="md:w-full">
-                <img src="./src/img/article-img.png" alt="" />
+                <img src="<?php echo !empty($article['image_url']) ? htmlspecialchars($article['image_url']) : './src/img/article-img.png'; ?>" alt="" />
               </div>
             </div>
           </div>
@@ -400,6 +458,384 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
                       <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
                     </div>
                   </div>
+
+                  <!-- card4 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
+
+                  <!-- card3 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
+
+                  <!-- card4 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
+
+                  <!-- card4 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
+
+                  <!-- card4 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
+
+                  <!-- card4 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
+
+                  <!-- card4 -->
+                  <div class="bg-white rounded-lg shadow-sm flex-none w-[450px] h-[278px] mx-4 flex">
+                    <!-- Content Section (left side) -->
+                    <div class="px-4 flex-1 flex flex-col justify-center">
+                      <div>
+                        <div class="mb-4 flex items-center space-x-2">
+                          <h4 class="text-lg font-medium">CR7 is goat</h4>
+                          <span class="text-sm text-gray-500">Verified Buyer</span>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="flex mb-3">
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+
+                        <!-- Testimony -->
+                        <p class="text-gray-600 text-xs mb-4 line-clamp-3">"The perfect plant for beginners! It looks amazing and hardly needs any care. Totally brightens up my space."</p>
+                      </div>
+
+                      <!-- Product Info Section - removed extra margins and padding -->
+                      <div>
+                        <hr class="h-0.5 bg-gray-200 mb-4" />
+                        <div class="flex items-center gap-3">
+                          <img src="./src/img/plant (1).png" alt="Snake Plant" class="w-12 h-16 object-cover" />
+                          <span class="text-sm text-gray-700">Snake Plant Laurentii</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Customer Image (right side) -->
+                    <div class="w-[200px]">
+                      <img src="./src/img/plant (1).png" alt="Customer" class="w-full h-full object-cover rounded-r-lg" />
+                    </div>
+                  </div>
                 </div>
               </div>
               <!-- Navigation Buttons -->
@@ -443,59 +879,49 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
                         <path
                           d="M11.3846 28.4615C11.3846 29.2475 10.7475 29.8846 9.96154 29.8846C9.17559 29.8846 8.53846 29.2475 8.53846 28.4615C8.53846 27.6756 9.17559 27.0385 9.96154 27.0385C10.7475 27.0385 11.3846 27.6756 11.3846 28.4615Z"
                           fill="#73AC32" />
-                        <path
-                          d="M14.2308 25.6154C15.0167 25.6154 15.6538 24.9782 15.6538 24.1923C15.6538 23.4064 15.0167 22.7692 14.2308 22.7692C13.4448 22.7692 12.8077 23.4064 12.8077 24.1923C12.8077 24.9782 13.4448 25.6154 14.2308 25.6154Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M15.6538 28.4615C15.6538 29.2475 15.0167 29.8846 14.2308 29.8846C13.4448 29.8846 12.8077 29.2475 12.8077 28.4615C12.8077 27.6756 13.4448 27.0385 14.2308 27.0385C15.0167 27.0385 15.6538 27.6756 15.6538 28.4615Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M18.5 25.6154C19.2859 25.6154 19.9231 24.9782 19.9231 24.1923C19.9231 23.4064 19.2859 22.7692 18.5 22.7692C17.7141 22.7692 17.0769 23.4064 17.0769 24.1923C17.0769 24.9782 17.7141 25.6154 18.5 25.6154Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M19.9231 28.4615C19.9231 29.2475 19.2859 29.8846 18.5 29.8846C17.7141 29.8846 17.0769 29.2475 17.0769 28.4615C17.0769 27.6756 17.7141 27.0385 18.5 27.0385C19.2859 27.0385 19.9231 27.6756 19.9231 28.4615Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M22.7692 25.6154C23.5552 25.6154 24.1923 24.9782 24.1923 24.1923C24.1923 23.4064 23.5552 22.7692 22.7692 22.7692C21.9833 22.7692 21.3462 23.4064 21.3462 24.1923C21.3462 24.9782 21.9833 25.6154 22.7692 25.6154Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M24.1923 28.4615C24.1923 29.2475 23.5552 29.8846 22.7692 29.8846C21.9833 29.8846 21.3462 29.2475 21.3462 28.4615C21.3462 27.6756 21.9833 27.0385 22.7692 27.0385C23.5552 27.0385 24.1923 27.6756 24.1923 28.4615Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M27.0385 25.6154C27.8244 25.6154 28.4615 24.9782 28.4615 24.1923C28.4615 23.4064 27.8244 22.7692 27.0385 22.7692C26.2525 22.7692 25.6154 23.4064 25.6154 24.1923C25.6154 24.9782 26.2525 25.6154 27.0385 25.6154Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M24.1923 19.9231C24.1923 20.709 23.5552 21.3462 22.7692 21.3462C21.9833 21.3462 21.3462 20.709 21.3462 19.9231C21.3462 19.1371 21.9833 18.5 22.7692 18.5C23.5552 18.5 24.1923 19.1371 24.1923 19.9231Z"
-                          fill="#73AC32" />
-                        <path
-                          d="M27.0385 21.3462C27.8244 21.3462 28.4615 20.709 28.4615 19.9231C28.4615 19.1371 27.8244 18.5 27.0385 18.5C26.2525 18.5 25.6154 19.1371 25.6154 19.9231C25.6154 20.709 26.2525 21.3462 27.0385 21.3462Z"
-                          fill="#73AC32" />
-                        <path
-                          fill-rule="evenodd"
-                          clip-rule="evenodd"
-                          d="M8.53846 0C9.3244 0 9.96154 0.637133 9.96154 1.42308V4.26923H27.0385V1.42308C27.0385 0.637133 27.6756 0 28.4615 0C29.2475 0 29.8846 0.637133 29.8846 1.42308V4.26923H31.3077C34.4515 4.26923 37 6.81776 37 9.96154V31.3077C37 34.4515 34.4515 37 31.3077 37H5.69231C2.54853 37 0 34.4515 0 31.3077V9.96154C0 6.81776 2.54853 4.26923 5.69231 4.26923H7.11538V1.42308C7.11538 0.637133 7.75252 0 8.53846 0ZM34.1538 17.0769C34.1538 15.505 32.8796 14.2308 31.3077 14.2308H5.69231C4.12042 14.2308 2.84615 15.505 2.84615 17.0769V31.3077C2.84615 32.8796 4.12042 34.1538 5.69231 34.1538H31.3077C32.8796 34.1538 34.1538 32.8796 34.1538 31.3077V17.0769Z"
-                          fill="#73AC32" />
                       </svg>
                     </div>
-                    <div class="text-left">
-                      <h3 class="text-lg font-semibold">Weekly Article Content</h3>
-                      <p class="text-sm">Helpful guides and inspiration to keep your indoor jungle thriving — no matter your plant experience.</p>
+                    <div class="flex flex-col items-start">
+                      <span class="text-lg font-semibold">Free Shipping</span>
+                      <span class="text-sm text-gray-500">On orders over $50</span>
                     </div>
                   </div>
                   <div class="flex flex-col items-start space-y-2">
                     <div class="bg-white bg-opacity-50 p-4 rounded-xl flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="29" height="35" viewBox="0 0 29 35" fill="none">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
                         <path
-                          d="M11.4938 6.05312C11.4938 4.71211 10.4067 3.625 9.06564 3.625C7.72462 3.625 6.63751 4.71211 6.63751 6.05312L6.6375 10.6781M11.4938 6.05312L11.4938 3.74062C11.4938 2.39961 12.5809 1.3125 13.9219 1.3125C15.2629 1.3125 16.35 2.39961 16.35 3.74062L16.35 6.05312M11.4938 6.05312L11.6094 15.1875M16.35 16.3437V6.05312M16.35 6.05312C16.35 4.71211 17.4372 3.625 18.7782 3.625C20.1192 3.625 21.2063 4.71211 21.2063 6.05312V22.125M6.6375 10.6781C6.6375 9.33711 5.55039 8.25 4.20937 8.25C2.86836 8.25 1.78125 9.33711 1.78125 10.6781V23.2812C1.78125 29.0285 6.44029 33.6875 12.1875 33.6875H15.2984C17.445 33.6875 19.5037 32.8348 21.0215 31.3169L23.6919 28.6465C25.2098 27.1287 26.0625 25.07 26.0625 22.9234L26.0672 19.8032C26.0695 19.5364 26.1706 19.278 26.372 19.0766C27.3202 18.1284 27.3202 16.591 26.372 15.6428C25.4237 14.6945 23.8863 14.6945 22.9381 15.6428C21.7944 16.7864 21.2182 18.288 21.211 19.7839M6.6375 10.6781V17.5M16.3037 24.1569C16.9048 23.5559 17.5887 23.0882 18.3187 22.7538C19.233 22.335 20.2196 22.1254 21.2063 22.125M21.2092 22.125H21.2063"
-                          stroke="#73AC32"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round" />
+                          d="M19.9231 19.9231C19.9231 20.709 19.2859 21.3462 18.5 21.3462C17.7141 21.3462 17.0769 20.709 17.0769 19.9231C17.0769 19.1371 17.7141 18.5 18.5 18.5C19.2859 18.5 19.9231 19.1371 19.9231 19.9231Z"
+                          fill="#73AC32" />
+                        <path
+                          d="M9.96154 25.6154C10.7475 25.6154 11.3846 24.9782 11.3846 24.1923C11.3846 23.4064 10.7475 22.7692 9.96154 22.7692C9.17559 22.7692 8.53846 23.4064 8.53846 24.1923C8.53846 24.9782 9.17559 25.6154 9.96154 25.6154Z"
+                          fill="#73AC32" />
+                        <path
+                          d="M11.3846 28.4615C11.3846 29.2475 10.7475 29.8846 9.96154 29.8846C9.17559 29.8846 8.53846 29.2475 8.53846 28.4615C8.53846 27.6756 9.17559 27.0385 9.96154 27.0385C10.7475 27.0385 11.3846 27.6756 11.3846 28.4615Z"
+                          fill="#73AC32" />
                       </svg>
                     </div>
-                    <div class="text-left">
-                      <h3 class="text-lg font-semibold">No Spam</h3>
-                      <p class="text-sm">Only curated updates, plant tips, and special offers — no clutter and no junk.</p>
+                    <div class="flex flex-col items-start">
+                      <span class="text-lg font-semibold">24/7 Support</span>
+                      <span class="text-sm text-gray-500">We're here to help</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-start space-y-2">
+                    <div class="bg-white bg-opacity-50 p-4 rounded-xl flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
+                        <path
+                          d="M19.9231 19.9231C19.9231 20.709 19.2859 21.3462 18.5 21.3462C17.7141 21.3462 17.0769 20.709 17.0769 19.9231C17.0769 19.1371 17.7141 18.5 18.5 18.5C19.2859 18.5 19.9231 19.1371 19.9231 19.9231Z"
+                          fill="#73AC32" />
+                        <path
+                          d="M9.96154 25.6154C10.7475 25.6154 11.3846 24.9782 11.3846 24.1923C11.3846 23.4064 10.7475 22.7692 9.96154 22.7692C9.17559 22.7692 8.53846 23.4064 8.53846 24.1923C8.53846 24.9782 9.17559 25.6154 9.96154 25.6154Z"
+                          fill="#73AC32" />
+                        <path
+                          d="M11.3846 28.4615C11.3846 29.2475 10.7475 29.8846 9.96154 29.8846C9.17559 29.8846 8.53846 29.2475 8.53846 28.4615C8.53846 27.6756 9.17559 27.0385 9.96154 27.0385C10.7475 27.0385 11.3846 27.6756 11.3846 28.4615Z"
+                          fill="#73AC32" />
+                      </svg>
+                    </div>
+                    <div class="flex flex-col items-start">
+                      <span class="text-lg font-semibold">Secure Payment</span>
+                      <span class="text-sm text-gray-500">100% secure checkout</span>
                     </div>
                   </div>
                 </div>
@@ -503,12 +929,14 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
             </div>
           </div>
         </section>
-        <!-- End Of Subscribe Section -->
       </div>
     </main>
 
-      <!-- memasukan navbar -->
+    <!-- memasukan footer -->
     <?php include './component/footer.php'; ?>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/10.0.0/swiper-bundle.min.js"></script>
+    <script src="./src/script.js"></script>
   </body>
-  <script src="./src/script.js"></script>
 </html>

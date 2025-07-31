@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 30, 2025 at 08:32 AM
+-- Generation Time: Jul 30, 2025 at 09:22 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -66,7 +66,8 @@ CREATE TABLE `articles` (
 
 INSERT INTO `articles` (`id`, `title`, `content`, `author_id`, `image_url`, `created_at`, `category`, `excerpt`) VALUES
 (1, 'Judul Artikel Contoh', 'Di era digital saat ini, perkembangan teknologi telah mengubah wajah dunia kerja secara signifikan. Banyak pekerjaan baru bermunculan, dan tuntutan keterampilan juga ikut berubah. Oleh karena itu, penting bagi para pencari kerja maupun profesional untuk mampu beradaptasi dan menyiapkan strategi karir yang relevan dengan zaman. Salah satu langkah awal yang bisa dilakukan adalah meningkatkan keterampilan digital. Keterampilan seperti penggunaan Microsoft Office, Google Workspace, software desain, analisis data, hingga pemrograman dasar kini menjadi nilai tambah yang signifikan di berbagai bidang kerja. Berbagai platform pembelajaran online seperti Coursera, Udemy, dan Skillshare dapat dimanfaatkan untuk belajar mandiri dan meningkatkan kemampuan.\n\nSelain itu, membangun personal branding di media sosial juga menjadi strategi yang tak kalah penting. Media seperti LinkedIn dapat menjadi wadah untuk menunjukkan pencapaian, membagikan wawasan, dan membangun koneksi profesional. Dengan personal branding yang baik, bukan tidak mungkin kamu akan dilirik oleh perusahaan bahkan sebelum melamar kerja. Dalam membangun karir, memperluas jaringan atau networking juga sangat membantu. Mengikuti seminar, webinar, dan aktif dalam komunitas industri dapat membuka banyak peluang baru dan memperkuat relasi profesional.\n\nSikap mental juga berperan penting. Memiliki growth mindset, yaitu sikap yang terbuka terhadap pembelajaran dan perubahan, akan membantumu untuk terus berkembang dan tidak mudah menyerah. Terima kritik sebagai kesempatan untuk belajar, dan jangan ragu mencoba hal-hal baru meskipun belum ahli. Terakhir, siapkan portofolio digital yang dapat menampilkan hasil kerja terbaikmu. Portofolio ini bisa berupa tulisan, desain, proyek coding, atau kampanye marketing yang pernah kamu tangani. Portofolio digital tidak hanya menjadi alat pendukung saat melamar pekerjaan, tetapi juga menjadi bukti nyata dari kemampuan dan profesionalitasmu. Dengan menerapkan strategi-strategi ini secara konsisten, kamu akan lebih siap dalam menghadapi persaingan karir di era digital yang serba cepat dan dinamis.\n\n', 1, 'uploads/artikel/contoh.jpg', '2025-07-30 09:55:42', 'Tips Karir', 'Tingkatkan keterampilan digital, bangun personal branding, dan siapkan portofolio profesional untuk menghadapi persaingan karir di era digital yang terus berkembang.'),
-(2, 'Membangun Karir di Era Digital', 'Di tengah perkembangan teknologi yang pesat, dunia kerja juga mengalami perubahan yang signifikan. Banyak pekerjaan baru bermunculan dan keterampilan digital menjadi kunci utama untuk bersaing. Untuk itu, penting bagi setiap individu untuk terus belajar dan mengasah keterampilan sesuai dengan kebutuhan industri saat ini. Salah satu langkah penting adalah memahami tren teknologi seperti cloud computing, data analytics, dan artificial intelligence. Selain itu, membangun portofolio digital yang mencerminkan kemampuan dan pengalaman juga sangat penting. Gunakan media sosial dan platform profesional seperti LinkedIn untuk menampilkan keahlianmu dan membangun jaringan dengan profesional lain. Tak kalah penting, attitude dan soft skill seperti komunikasi, manajemen waktu, dan kerja tim juga sangat dihargai oleh perusahaan modern. Dengan kombinasi keterampilan teknis dan soft skill yang kuat, kamu bisa lebih siap menghadapi tantangan karir di era digital.', 1, 'uploads/artikel/contoh.jpg', '2025-07-29 16:15:00', 'Tips Karir', 'Pelajari cara mengembangkan keterampilan digital dan membangun portofolio profesional untuk bersaing di era kerja modern.');
+(2, 'Membangun Karir di Era Digital', 'Di tengah perkembangan teknologi yang pesat, dunia kerja juga mengalami perubahan yang signifikan. Banyak pekerjaan baru bermunculan dan keterampilan digital menjadi kunci utama untuk bersaing. Untuk itu, penting bagi setiap individu untuk terus belajar dan mengasah keterampilan sesuai dengan kebutuhan industri saat ini. Salah satu langkah penting adalah memahami tren teknologi seperti cloud computing, data analytics, dan artificial intelligence. Selain itu, membangun portofolio digital yang mencerminkan kemampuan dan pengalaman juga sangat penting. Gunakan media sosial dan platform profesional seperti LinkedIn untuk menampilkan keahlianmu dan membangun jaringan dengan profesional lain. Tak kalah penting, attitude dan soft skill seperti komunikasi, manajemen waktu, dan kerja tim juga sangat dihargai oleh perusahaan modern. Dengan kombinasi keterampilan teknis dan soft skill yang kuat, kamu bisa lebih siap menghadapi tantangan karir di era digital.', 1, 'uploads/artikel/contoh.jpg', '2025-07-29 16:15:00', 'Tips Karir', 'Pelajari cara mengembangkan keterampilan digital dan membangun portofolio profesional untuk bersaing di era kerja modern.'),
+(3, 'Nam quo autem fugiat', 'Incidunt eligendi c', 3, 'uploads/artikel/1753906559_carbon (38).png', '2025-07-30 20:15:59', 'Panduan & Perawatan', 'Alias et eiusmod pro');
 
 -- --------------------------------------------------------
 
@@ -82,6 +83,15 @@ CREATE TABLE `article_comments` (
   `created_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `article_comments`
+--
+
+INSERT INTO `article_comments` (`id`, `article_id`, `user_id`, `comment`, `created_at`) VALUES
+(1, 1, 1, 'hallo kak', '2025-07-30 23:24:19'),
+(2, 1, 1, 'wkwk', '2025-07-30 23:24:19'),
+(3, 1, 1, 'pepek', '2025-07-30 23:24:19');
+
 -- --------------------------------------------------------
 
 --
@@ -93,6 +103,14 @@ CREATE TABLE `cart` (
   `user_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `cart`
+--
+
+INSERT INTO `cart` (`id`, `user_id`, `created_at`) VALUES
+(1, 2, '2025-07-30 18:32:03'),
+(20, 1, '2025-07-31 00:23:48');
 
 -- --------------------------------------------------------
 
@@ -106,6 +124,15 @@ CREATE TABLE `cart_items` (
   `product_id` int DEFAULT NULL,
   `quantity` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `cart_items`
+--
+
+INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`) VALUES
+(11, 1, 3, 3),
+(34, 20, 3, 3),
+(35, 20, 4, 1);
 
 -- --------------------------------------------------------
 
@@ -122,6 +149,14 @@ CREATE TABLE `notifications` (
   `created_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `type`, `message`, `is_read`, `created_at`) VALUES
+(1, 1, 'checkout_success', 'Checkout berhasil! Order #13 sedang diproses.', 1, '2025-07-30 20:56:19'),
+(2, 1, 'checkout_success', 'Checkout berhasil! Order #14 sedang diproses.', 1, '2025-07-31 00:14:53');
+
 -- --------------------------------------------------------
 
 --
@@ -132,14 +167,24 @@ CREATE TABLE `orders` (
   `id` int NOT NULL,
   `user_id` int DEFAULT NULL,
   `order_date` datetime DEFAULT NULL,
-  `status` enum('pending','paid','shipped','completed','cancelled') DEFAULT NULL,
+  `status` enum('pending','paid','shipped','delivered','completed','cancelled') DEFAULT NULL,
   `total_amount` decimal(10,2) DEFAULT NULL,
+  `shipping_cost` decimal(10,2) DEFAULT '0.00',
   `payment_method` enum('transfer','ewallet','cod') DEFAULT NULL,
-  `payment_proof` varchar(255) DEFAULT NULL,
+  `bukti_pembayaran` varchar(255) DEFAULT NULL,
   `shipping_address` text,
   `tracking_number` varchar(100) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`id`, `user_id`, `order_date`, `status`, `total_amount`, `shipping_cost`, `payment_method`, `bukti_pembayaran`, `shipping_address`, `tracking_number`, `created_at`) VALUES
+(12, 1, '2025-07-30 20:36:23', 'pending', '64.99', '15.00', 'cod', '688a1fdf9d0b6_carbon (38).png', 'Asperiores illum eu, Amet ut deserunt in, CA, 20001', 'GN2025073013363112', '2025-07-30 20:36:23'),
+(13, 1, '2025-07-30 20:56:08', 'completed', '50.00', '0.00', 'ewallet', '688a260f78fda_carbon (38).png', 'wengga metro', 'GN2025073014025513', '2025-07-30 20:56:08'),
+(14, 1, '2025-07-31 00:14:48', 'completed', '1000.00', '25.00', 'transfer', '688a530d776e5_carbon (38).png', 'wengga metro', 'GN2025073017145314', '2025-07-31 00:14:48');
 
 -- --------------------------------------------------------
 
@@ -154,6 +199,15 @@ CREATE TABLE `order_items` (
   `quantity` int DEFAULT NULL,
   `price` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `order_items`
+--
+
+INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
+(12, 12, 3, 1, '49.99'),
+(13, 13, 3, 1, '49.99'),
+(14, 14, 3, 2, '49.99');
 
 -- --------------------------------------------------------
 
@@ -204,13 +258,10 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `description`, `botanical_name`, `common_names`, `detail_care`, `whats_included`, `price`, `stock`, `is_best_seller`, `created_at`, `updated_at`, `price_old`, `plant_size`, `pet_friendly`, `difficulty`, `product_label`, `category_name`) VALUES
-(3, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.\n\nSnake Plant Laurentii is a tough yet elegant houseplant, recognized for its tall, upright foliage\n\nOriginating from tropical West Africa, this plant is well-loved for its ability to purify the air\n\n---resources---\nView Snake Plant Care Guide\nView Snake Plant Video', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword, Viper’s Bowstring Hemp', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\')\r\nLow maintenance and highly adaptable\r\nAir-purifying capabilities\r\nTolerates low light conditions\r\nDrought resistant', '1x Snake Plant Laurentii in your chosen size\nCeramic pot in your selected color\nDetailed care instructions\n30-day plant health guarantee', '49.99', 1922, 1, '2025-07-30 11:18:22', '2025-07-30 00:00:00', '549.99', NULL, NULL, NULL, NULL, NULL),
-(4, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword, Viper’s Bowstring Hemp', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\')\r\nLow maintenance and highly adaptable\r\nAir-purifying capabilities\r\nTolerates low light conditions\r\nDrought resistant', '1x Snake Plant Laurentii in your chosen size\r\nCeramic pot in your selected color\r\nDetailed care instructions\r\n30-day plant health guarantee', '19.99', 999, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(5, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white edges, and upright form, the Snake Plant Laurentii brings architectural interest and air-purifying benefits to any room.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\') is one of the toughest and easiest houseplants to grow. Thrives on neglect, tolerates low light, and needs infrequent watering. Avoid overwatering to prevent root rot.', '1x Snake Plant Laurentii in your chosen size\nCeramic pot (optional)\nCare card', '99.99', 1922, 1, '2025-07-30 11:18:22', '2025-07-30 00:00:00', '549.99', NULL, NULL, NULL, NULL, NULL),
-(6, 'Snake Plant Laurentii', 'Snake Plant Laurentii is a tough yet elegant houseplant, recognized for its tall, upright foliage with deep green centers and golden-yellow outlines. It grows well in both bright spots and dim corners, making it a versatile choice for any room, whether at home or at work.\r\n\r\nOriginating from tropical West Africa, this plant is well-loved for its ability to purify the air and its impressive durability. It\'s an excellent choice for plant beginners or anyone with a busy lifestyle.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword, Viper’s Bowstring Hemp', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\')\r\nLow maintenance and highly adaptable\r\nAir-purifying capabilities\r\nTolerates low light conditions\r\nDrought resistant', '1x Snake Plant Laurentii in your chosen size\r\nCeramic pot in your selected color\r\nDetailed care instructions\r\n30-day plant health guarantee', '100.00', 999, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(7, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white edges, and upright form, the Snake Plant Laurentii brings architectural interest and air-purifying benefits to any room.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\') is one of the toughest and easiest houseplants to grow. Thrives on neglect, tolerates low light, and needs infrequent watering. Avoid overwatering to prevent root rot.', '1x Snake Plant Laurentii in your chosen size\nCeramic pot (optional)\nCare card', '19.99', 1922, 1, '2025-07-30 11:18:22', '2025-07-30 00:00:00', '549.99', NULL, NULL, NULL, NULL, NULL),
-(8, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white edges, and upright form, the Snake Plant Laurentii brings architectural interest and air-purifying benefits to any room.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\') is one of the toughest and easiest houseplants to grow. Thrives on neglect, tolerates low light, and needs infrequent watering. Avoid overwatering to prevent root rot.', '1x Snake Plant Laurentii in your chosen size\nCeramic pot (optional)\nCare card', '99.99', 1922, 1, '2025-07-30 11:18:22', '2025-07-30 00:00:00', '549.99', NULL, NULL, NULL, NULL, NULL),
-(9, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white edges, and upright form, the Snake Plant Laurentii brings architectural interest and air-purifying benefits to any room.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\') is one of the toughest and easiest houseplants to grow. Thrives on neglect, tolerates low light, and needs infrequent watering. Avoid overwatering to prevent root rot.', '1x Snake Plant Laurentii in your chosen size\nCeramic pot (optional)\nCare card', '100.00', 1922, 1, '2025-07-30 11:18:22', '2025-07-30 00:00:00', '549.99', NULL, NULL, NULL, NULL, NULL);
+(3, 'Snake Plant Laurentii', 'With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.\n\nSnake Plant Laurentii is a tough yet elegant houseplant, recognized for its tall, upright foliage\n\nOriginating from tropical West Africa, this plant is well-loved for its ability to purify the air\n\n---resources---\nView Snake Plant Care Guide\nView Snake Plant Video', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword, Viper’s Bowstring Hemp', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\')\r\nLow maintenance and highly adaptable\r\nAir-purifying capabilities\r\nTolerates low light conditions\r\nDrought resistant', '1x Snake Plant Laurentii in your chosen size\nCeramic pot in your selected color\nDetailed care instructions\n30-day plant health guarantee', '49.99', 3, 0, '2025-07-30 11:18:22', '2025-07-30 00:00:00', '549.99', 'MD (1-2 FT)', 'YES', 'NO-FUSS', 'BEST SELLER', 'Indoor Plants'),
+(4, 'tanaman uzumaki', 'With its striking dark green leaves, bold white veins, and sculptural shape, this plant brings instant drama to any space.', 'Sansevieria trifasciata \'Laurentii\'', 'Snake Plant, Mother-in-law\'s Tongue, Saint George\'s Sword, Viper’s Bowstring Hemp', 'Snake Plant Laurentii (Dracaena trifasciata \'Laurentii\')\r\nLow maintenance and highly adaptable\r\nAir-purifying capabilities\r\nTolerates low light conditions\r\nDrought resistant', '1x Snake Plant Laurentii in your chosen size\r\nCeramic pot in your selected color\r\nDetailed care instructions\r\n30-day plant health guarantee', '19.99', 999, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Indoor Plants'),
+(13, 'Kamal Burke', 'Omnis enim vel commo', 'Finn Hopkins', 'Abbot Fox', 'Animi et nulla mole', 'Tempora voluptas com', '839.00', 91, NULL, NULL, NULL, '43.00', 'Do ducimus duis pro', 'NO', 'MODERATE', 'OUT OF STOCK', 'Succulent'),
+(14, 'Skyler Pope', 'Eum aperiam exercita', 'Vielka Lowery', 'Fleur Maynard', 'Eos voluptate volup', 'Quas impedit deseru', '461.00', 22, NULL, NULL, NULL, '492.00', 'Deleniti molestias e', 'YES', 'MODERATE', 'NEW ARRIVAL', 'Outdoor Plants');
 
 -- --------------------------------------------------------
 
@@ -232,7 +283,8 @@ CREATE TABLE `product_images` (
 INSERT INTO `product_images` (`id`, `product_id`, `image_url`, `is_main`) VALUES
 (13, 3, 'uploads/products/main-img-product (1).png', 1),
 (14, 3, 'uploads/products/main-img-product (2).png', 0),
-(15, 3, 'uploads/products/main-img-product.png', 0);
+(15, 3, 'uploads/products/main-img-product.png', 0),
+(16, 13, 'uploads/products/1753904827_carbon (38).png', 1);
 
 -- --------------------------------------------------------
 
@@ -252,8 +304,8 @@ CREATE TABLE `product_likes` (
 --
 
 INSERT INTO `product_likes` (`id`, `product_id`, `user_id`, `created_at`) VALUES
-(2, 3, 1, '2025-07-30 12:30:35'),
-(3, 3, 2, '2025-07-30 12:52:03');
+(6, 4, 2, '2025-07-30 16:39:18'),
+(7, 3, 2, '2025-07-30 18:57:23');
 
 -- --------------------------------------------------------
 
@@ -280,11 +332,7 @@ INSERT INTO `reviews` (`id`, `product_id`, `user_id`, `rating`, `comment`, `imag
 (2, 3, 1, 5, 'jelek biintang 1', 'uploads/review/review_1753852786_carbon (37).png', '2025-07-30 12:19:46'),
 (3, 3, 1, 5, 'gokil brok', 'uploads/review/review_1753852870_carbon (36).png', '2025-07-30 12:21:10'),
 (5, 3, 2, 3, 'produk jelek', NULL, '2025-07-30 12:53:28'),
-(6, 6, 2, 5, 'how', NULL, '2025-07-30 13:07:21'),
 (7, 3, 2, 5, 'goks', 'uploads/review/review_1753856168_mina-rad-eR3W3BouGL4-unsplash.jpg', '2025-07-30 13:16:08'),
-(8, 6, 2, 3, 'aw', NULL, '2025-07-30 13:29:00'),
-(9, 6, 2, 4, 'ad', NULL, '2025-07-30 13:29:14'),
-(10, 6, 2, 1, 'S', NULL, '2025-07-30 13:29:23'),
 (23, 3, 1, 5, 'Produk sangat bagus!', 'uploads/review/review_1753852870_carbon (36).png', '2025-07-30 13:41:56'),
 (24, 3, 1, 4, 'Tanaman sehat dan segar.', 'uploads/review/review_1753852870_carbon (36).png', '2025-07-30 13:41:56'),
 (25, 3, 1, 3, 'Cukup baik, sesuai harga.', '', '2025-07-30 13:41:56'),
@@ -303,7 +351,10 @@ INSERT INTO `reviews` (`id`, `product_id`, `user_id`, `rating`, `comment`, `imag
 (38, 3, 2, 3, 'kontol ayam', 'uploads/review/review_1753859235_carbon (38).png', '2025-07-30 14:07:15'),
 (39, 3, 2, 5, 'pukii ayam enak sedap kali', NULL, '2025-07-30 14:25:43'),
 (40, 3, 2, 5, 'ASD', NULL, '2025-07-30 15:09:37'),
-(41, 8, 2, 5, 'ad', NULL, '2025-07-30 15:10:08');
+(42, 3, 1, 4, 'good', NULL, '2025-07-30 19:14:55'),
+(43, 3, 1, 3, 'good', NULL, '2025-07-30 19:15:11'),
+(44, 3, 1, 3, 'kontol', NULL, '2025-07-30 19:18:40'),
+(45, 3, 1, 5, 'kontol mega', NULL, '2025-07-30 19:27:17');
 
 -- --------------------------------------------------------
 
@@ -332,16 +383,21 @@ CREATE TABLE `users` (
   `phone` varchar(20) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `profile_image` varchar(255) DEFAULT NULL
+  `profile_image` varchar(255) DEFAULT NULL,
+  `is_admin` int DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `created_at`, `updated_at`, `profile_image`) VALUES
-(1, 'febrian syusda', 'feb123@gmail.com', '$2y$10$bQgpZy8emOhTIX5Xi0pIL.wY5sVlIq3V4CM61Ubbn6abRcaMNGIZO', '08123123123', '2025-07-30 02:43:57', '2025-07-30 02:43:57', 'uploads/profile/profile_1_1753821989.png'),
-(2, 'febrian raja tanaman', 'febrian@gmail.com', '$2y$10$1N2yjB7OXcMExghYOcXXfeE.h2NHfTOdBlq3Y43BraKogoDL4Yvsa', NULL, '2025-07-30 12:41:36', '2025-07-30 12:41:36', NULL);
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `created_at`, `updated_at`, `profile_image`, `is_admin`) VALUES
+(1, 'Febrian Muhammad', 'feb123@gmail.com', '$2y$10$bQgpZy8emOhTIX5Xi0pIL.wY5sVlIq3V4CM61Ubbn6abRcaMNGIZO', '08123123123', '2025-07-30 02:43:57', '2025-07-30 02:43:57', 'uploads/profile/profile_1_1753821989.png', 0),
+(2, 'febrian raja tanaman', 'febrian@gmail.com', '$2y$10$1N2yjB7OXcMExghYOcXXfeE.h2NHfTOdBlq3Y43BraKogoDL4Yvsa', NULL, '2025-07-30 12:41:36', '2025-07-30 12:41:36', NULL, 0),
+(3, 'febrian admin', 'admin@gmail.com', '$2y$10$Qq6nnsSsAEMJS88Ag6pK8uNNRYpSf4UIx7fxf85ySFvDLZUMOt14m', '08123123123', '2025-07-30 18:21:12', '2025-07-30 18:21:12', '1753899672_carbon (39).png', 1),
+(4, 'Avye Merritt', 'syty@mailinator.com', '$2y$10$z/kpsLzyptJk1M8tyPUcuuBDKaTQoewKWSER6Gge0laiAI1uGRLw2', NULL, NULL, NULL, NULL, 0),
+(5, 'Maite Waters', 'woqogyzawe@mailinator.com', '$2y$10$vdC9xJ5VTuhtJmCKs5YqlOoVMoVqrfmgmKh85ZqsQZMKm5qh0Vb6q', NULL, NULL, NULL, NULL, 1),
+(8, 'febrian syusada', 'admin123@gmail.com', '$2y$10$lmONdYn97Ec.BcF/0qtbW.kYkeJMzgY1yTtC5Hf9o.D8m1JXkt57q', NULL, NULL, NULL, NULL, 0);
 
 --
 -- Indexes for dumped tables
@@ -470,43 +526,43 @@ ALTER TABLE `addresses`
 -- AUTO_INCREMENT for table `articles`
 --
 ALTER TABLE `articles`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `article_comments`
 --
 ALTER TABLE `article_comments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -518,19 +574,19 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `product_images`
 --
 ALTER TABLE `product_images`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `product_likes`
 --
 ALTER TABLE `product_likes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `reviews`
@@ -548,7 +604,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables

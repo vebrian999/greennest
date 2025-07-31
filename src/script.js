@@ -127,6 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function to show specific slide
     const showSlide = (index) => {
+      if (!slides[index] || !dots[index]) return; // Cegah error jika slide/dot tidak ada
       slides.forEach((slide) => slide.classList.add("opacity-0"));
       dots.forEach((dot) => {
         dot.classList.remove("opacity-100");
@@ -169,22 +170,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle testimonial slider functionality
   let currentTestimonialSlide = 0;
-  const testimonialSlides = document.querySelectorAll("#testimonialSlider > div");
+  const testimonialSlider = document.getElementById("testimonialSlider");
+  const testimonialSlides = testimonialSlider ? testimonialSlider.querySelectorAll("div.bg-white") : [];
   const totalTestimonialSlides = testimonialSlides.length;
 
   const nextButton = document.getElementById("next");
   const prevButton = document.getElementById("prev");
 
   function showTestimonialSlide(index) {
+    if (!testimonialSlider || totalTestimonialSlides === 0) return;
     if (index >= totalTestimonialSlides) {
-      currentTestimonialSlide = 0; // Loop back to the first slide
+      currentTestimonialSlide = 0;
     } else if (index < 0) {
-      currentTestimonialSlide = totalTestimonialSlides - 1; // Go to the last slide
+      currentTestimonialSlide = totalTestimonialSlides - 1;
     } else {
       currentTestimonialSlide = index;
     }
-    const offset = -currentTestimonialSlide * (testimonialSlides[0].offsetWidth + 16); // 16px is the margin between cards
-    document.getElementById("testimonialSlider").style.transform = `translateX(${offset}px)`;
+    // Ambil lebar card dan gap antar card
+    const cardWidth = testimonialSlides[0].offsetWidth;
+    const gap = 16; // gap-4 = 1rem = 16px
+    const offset = -(currentTestimonialSlide * (cardWidth + gap));
+    testimonialSlider.style.transform = `translateX(${offset}px)`;
   }
 
   // Next button click event for testimonial slider
@@ -199,6 +205,9 @@ document.addEventListener("DOMContentLoaded", () => {
       showTestimonialSlide(currentTestimonialSlide - 1);
     });
   }
+
+  // Inisialisasi posisi awal
+  showTestimonialSlide(0);
 
   // Dropdown filter functionality
   const dropdownButtons = document.querySelectorAll("[data-collapse-toggle]");

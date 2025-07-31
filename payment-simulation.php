@@ -1,11 +1,51 @@
+<?php
+require_once 'config/db.php';
+
+$orderId = $_GET['order_id'] ?? null;
+$order = null;
+
+// Proses upload bukti pembayaran
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $orderId) {
+    if (isset($_FILES['bukti']) && $_FILES['bukti']['error'] === UPLOAD_ERR_OK) {
+        $targetDir = __DIR__ . "/uploads/bukti_pembayaran/";
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+        $fileName = uniqid() . "_" . basename($_FILES["bukti"]["name"]);
+        $targetFile = $targetDir . $fileName;
+        if (move_uploaded_file($_FILES["bukti"]["tmp_name"], $targetFile)) {
+            // Generate tracking number otomatis
+            $trackingNumber = "GN" . date("YmdHis") . $orderId;
+            $stmt = $conn->prepare("UPDATE orders SET bukti_pembayaran = ?, tracking_number = ? WHERE id = ?");
+            $stmt->bind_param('ssi', $fileName, $trackingNumber, $orderId);
+            $stmt->execute();
+            // Redirect ke halaman sukses
+            header("Location: checkout-success.php?order_id=$orderId");
+            exit;
+        }
+    }
+}
+
+// Ambil data order
+if ($orderId) {
+    $stmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+    $stmt->bind_param('i', $orderId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $order = $result->fetch_assoc();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulasi Pembayaran | GreenNest</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GreenNest | plant store</title>
+    <link rel="stylesheet" href="./src/output.css" />
+    <link rel="stylesheet" href="./src/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
+    <link rel="icon" href="./src/img/favicon.ico" type="image/x-icon" />
   <style>
     :root {
       --primary: #2d5016;
@@ -116,20 +156,10 @@
     }
   </style>
 </head>
+   <!-- navbar component -->
+      <?php include('component/navbar.php'); ?>
 <body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-  <!-- Navbar Placeholder -->
-  <nav class="fixed top-0 w-full z-50 glass-effect">
-    <div class="container mx-auto px-6 py-4">
-      <div class="flex items-center justify-between">
-        <div class="text-2xl font-bold primary">GreenNest</div>
-        <div class="hidden md:flex space-x-8">
-          <a href="#" class="text-gray-700 hover:text-primary transition-colors">Home</a>
-          <a href="#" class="text-gray-700 hover:text-primary transition-colors">Products</a>
-          <a href="#" class="text-gray-700 hover:text-primary transition-colors">About</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+
 
   <main class="container mx-auto px-4 pt-28 pb-20 flex items-center justify-center min-h-screen">
     <div class="payment-card glass-effect rounded-3xl p-8 w-full max-w-md fade-in">
@@ -144,7 +174,7 @@
         <p class="text-gray-600 text-sm">Lakukan pembayaran sesuai metode pilihan Anda</p>
       </div>
 
-      <form action="checkout-success.php" method="POST" enctype="multipart/form-data" class="space-y-6">
+      <form action="payment-simulation.php?order_id=<?= $orderId ?>" method="POST" enctype="multipart/form-data" class="space-y-6">
         <!-- Payment Details Card -->
         <div id="payment-info" class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 slide-in">
           <h3 class="text-lg font-medium primary mb-4 flex items-center">
@@ -246,6 +276,21 @@
           ← Kembali ke Checkout
         </a>
       </div>
+
+      <!-- Payment Proof Notification -->
+      <?php if ($order && $order['bukti_pembayaran']): ?>
+        <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+          Bukti pembayaran sudah di-upload.<br>
+          <a href="uploads/<?= htmlspecialchars($order['bukti_pembayaran']) ?>" target="_blank" class="underline">Lihat bukti pembayaran</a>
+        </div>
+      <?php endif; ?>
+
+      <!-- Success Message -->
+      <?php if (isset($_GET['success'])): ?>
+        <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-center">
+          Bukti pembayaran berhasil di-upload!
+        </div>
+      <?php endif; ?>
     </div>
   </main>
 
@@ -325,5 +370,7 @@
       button.disabled = true;
     });
   </script>
+
+
 </body>
 </html>

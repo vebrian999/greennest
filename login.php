@@ -1,4 +1,3 @@
-             
 <?php
 session_start();
 include __DIR__ . '/config/db.php';
@@ -27,8 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['user_id'] = $row['id'];
                         $_SESSION['user_name'] = $row['name'];
                         $_SESSION['user_email'] = $row['email'];
-                        header('Location: index.php');
-                        exit;
+                        $loginBerhasil = true;
                     } else {
                         $login_error = "Password salah.";
                     }
@@ -76,6 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+if (isset($loginBerhasil) && $loginBerhasil) {
+    $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
+    header('Location: ' . $redirect);
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -106,11 +110,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
+
+<?php include './component/navbar.php'; ?>
+
+<body class="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100 py-16">
     <!-- Navigation Toggle -->
-    <div class="fixed top-4 right-4 z-50">
+    <div class="fixed top-20 right-16 z-50">
         <button id="toggleAuth" class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-primary font-medium hover:bg-white transition-all duration-300 border border-green-100">
             Switch to <span id="toggleText">Register</span>
         </button>

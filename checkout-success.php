@@ -1,11 +1,45 @@
+<?php
+require_once 'config/db.php';
+
+// Ambil order_id dari URL
+$orderId = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
+
+// Ambil data order
+$order = null;
+if ($orderId) {
+    $stmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+    $stmt->bind_param('i', $orderId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $order = $result->fetch_assoc();
+}
+
+// Insert notifikasi jika belum ada untuk order ini
+if ($order && $order['user_id']) {
+    // Cek apakah notifikasi sudah ada
+    $notifCheck = $conn->prepare("SELECT id FROM notifications WHERE user_id = ? AND type = 'checkout_success' AND message LIKE ?");
+    $msgLike = "%Order #" . $orderId . "%";
+    $notifCheck->bind_param('is', $order['user_id'], $msgLike);
+    $notifCheck->execute();
+    $notifCheck->store_result();
+    if ($notifCheck->num_rows == 0) {
+        $notifMsg = "Checkout berhasil! Order #" . $orderId . " sedang diproses.";
+        $notifInsert = $conn->prepare("INSERT INTO notifications (user_id, type, message, is_read, created_at) VALUES (?, 'checkout_success', ?, 0, NOW())");
+        $notifInsert->bind_param('is', $order['user_id'], $notifMsg);
+        $notifInsert->execute();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checkout Berhasil | GreenNest</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GreenNest | plant store</title>
+    <link rel="stylesheet" href="./src/output.css" />
+    <link rel="stylesheet" href="./src/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
+    <link rel="icon" href="./src/img/favicon.ico" type="image/x-icon" />
   <script>
     tailwind.config = {
       theme: {
@@ -24,24 +58,14 @@
     }
   </script>
 </head>
+   <!-- navbar component -->
+      <?php include('component/navbar.php'); ?>
 <body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
-  <!-- Navbar Placeholder -->
-  <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-white/95 border-b border-white/20">
-    <div class="container mx-auto px-6 py-4">
-      <div class="flex items-center justify-between">
-        <div class="text-2xl font-bold text-primary">GreenNest</div>
-        <div class="hidden md:flex space-x-8">
-          <a href="#" class="text-gray-700 hover:text-primary transition-colors duration-300">Home</a>
-          <a href="#" class="text-gray-700 hover:text-primary transition-colors duration-300">Products</a>
-          <a href="#" class="text-gray-700 hover:text-primary transition-colors duration-300">About</a>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <main class="container mx-auto px-4 pt-28 pb-20 flex items-center justify-center min-h-screen">
+  <main class="container mx-auto px-4 py-32 flex items-center justify-center min-h-screen">
     <div class="backdrop-blur-md bg-white/95 border border-white/20 rounded-3xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-700 hover:shadow-3xl hover:-translate-y-1">
-      
+
+   
+
       <!-- Success Icon & Header -->
       <div class="text-center mb-8 animate-pulse">
         <div class="relative mx-auto mb-6">
@@ -61,7 +85,13 @@
         <p class="text-gray-600 text-base leading-relaxed max-w-sm mx-auto">
           Terima kasih telah berbelanja di GreenNest.<br>
           <span class="font-medium text-primary">Pesanan Anda sedang diproses</span>
+          <?php if ($order): ?>
+  <div class="mt-4 mb-2 p-3 bg-blue-100 text-blue-700 rounded-lg text-center">
+    Notifikasi: Checkout berhasil! Order #<?= htmlspecialchars($orderId) ?> sedang diproses.
+  </div>
+<?php endif; ?>
         </p>
+        
       </div>
 
       <!-- Order Summary Card -->

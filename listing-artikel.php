@@ -183,5 +183,7 @@
         });
       </script>
       <?php include('component/footer.php'); ?>
+
+      <script src="./src/script.js"></script>
   </body>
   </html>

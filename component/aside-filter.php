@@ -1,8 +1,17 @@
+<?php
+$plantTypeChecked = $_GET['plant_type'] ?? [];
+$priceRangeChecked = $_GET['price_range'] ?? [];
+$plantSizeChecked = $_GET['plant_size'] ?? [];
+$petFriendlyChecked = $_GET['pet_friendly'] ?? [];
+$productLabelChecked = $_GET['product_label'] ?? [];
+$difficultyChecked = $_GET['difficulty'] ?? [];
+$ratingChecked = $_GET['rating'] ?? [];
+?>
 <form id="filterForm" method="GET" action="list-product.php" class="space-y-0">
   <div class="sticky top-20 py-4 overflow-y-auto rounded">
     <ul class="space-y-0 mb-4">
       <!-- PLANT TYPE -->
-      <li>
+      <li class="<?php if (count($plantTypeChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-gray-200 hover:bg-gray-100 group"
@@ -15,14 +24,17 @@
         </button>
         <ul id="dropdown-1" class="hidden py-2 space-y-2">
           <li>
-            <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="plant_type[]" value="Indoor Plants" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+            <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11
+              <?php if (in_array('Indoor Plants', $plantTypeChecked)) echo 'bg-primary/10'; ?>">
+              <input type="checkbox" name="plant_type[]" value="Indoor Plants" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('Indoor Plants', $plantTypeChecked)) echo 'checked'; ?> />
               <span>Indoor Plants</span>
             </label>
           </li>
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="plant_type[]" value="Outdoor Plants" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="plant_type[]" value="Outdoor Plants" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('Outdoor Plants', $plantTypeChecked)) echo 'checked'; ?> />
               <span>Outdoor Plants</span>
             </label>
           </li>
@@ -35,7 +47,7 @@
         </ul>
       </li>
       <!-- PRICE RANGE -->
-      <li>
+      <li class="<?php if (count($priceRangeChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-gray-200 hover:bg-gray-100 group"
@@ -49,7 +61,8 @@
         <ul id="dropdown-2" class="hidden py-2 space-y-2">
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="price_range[]" value="under_20" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="price_range[]" value="under_20" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('under_20', $priceRangeChecked)) echo 'checked'; ?> />
               <span>Under $20</span>
             </label>
           </li>
@@ -74,7 +87,7 @@
         </ul>
       </li>
       <!-- PLANT SIZE -->
-      <li>
+      <li class="<?php if (count($plantSizeChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-gray-200 hover:bg-gray-100 group"
@@ -88,7 +101,8 @@
         <ul id="dropdown-3" class="hidden py-2 space-y-2">
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="plant_size[]" value='XS (5"-12")' class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="plant_size[]" value='XS (5"-12")' class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('XS (5\"-12\")', $plantSizeChecked)) echo 'checked'; ?> />
               <span>XS (5"-12")</span>
             </label>
           </li>
@@ -125,21 +139,22 @@
         </ul>
       </li>
       <!-- PET FRIENDLY -->
-      <li>
+      <li class="<?php if (count($petFriendlyChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-gray-200 hover:bg-gray-100 group"
           aria-controls="dropdown-4"
           data-collapse-toggle="dropdown-4">
           <span class="flex-1 ml-3 text-left whitespace-nowrap" sidebar-toggle-item>PET FRIENDLY</span>
-          <svg sidebar-toggle-item class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <svg sidebar-toggle_item class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
           </svg>
         </button>
         <ul id="dropdown-4" class="hidden py-2 space-y-2">
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="pet_friendly[]" value="YES" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="pet_friendly[]" value="YES" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('YES', $petFriendlyChecked)) echo 'checked'; ?> />
               <span>YES</span>
             </label>
           </li>
@@ -152,7 +167,7 @@
         </ul>
       </li>
       <!-- PRODUCT LABELS -->
-      <li>
+      <li class="<?php if (count($productLabelChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-b border-gray-200 hover:bg-gray-100 group"
@@ -166,7 +181,8 @@
         <ul id="dropdown-5" class="hidden py-2 space-y-2">
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="product_label[]" value="BEST SELLER" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="product_label[]" value="BEST SELLER" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('BEST SELLER', $productLabelChecked)) echo 'checked'; ?> />
               <span>BEST SELLER</span>
             </label>
           </li>
@@ -197,7 +213,7 @@
         </ul>
       </li>
       <!-- DIFFICULTY -->
-      <li>
+      <li class="<?php if (count($difficultyChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-b border-gray-200 hover:bg-gray-100 group"
@@ -211,7 +227,8 @@
         <ul id="dropdown-7" class="hidden py-2 space-y-2">
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="difficulty[]" value="NO-FUSS" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="difficulty[]" value="NO-FUSS" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('NO-FUSS', $difficultyChecked)) echo 'checked'; ?> />
               <span>NO-FUSS</span>
             </label>
           </li>
@@ -230,7 +247,7 @@
         </ul>
       </li>
       <!-- RATING -->
-      <li>
+      <li class="<?php if (count($ratingChecked) > 0) echo 'bg-primary/10'; ?>">
         <button
           type="button"
           class="flex items-center w-full p-4 text-base font-normal text-gray-900 transition duration-75 border-t border-b border-gray-200 hover:bg-gray-100 group"
@@ -244,7 +261,8 @@
         <ul id="dropdown-6" class="hidden py-2 space-y-2">
           <li>
             <label class="flex items-center w-full p-2 text-base font-normal text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 pl-11">
-              <input type="checkbox" name="rating[]" value="5" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3" />
+              <input type="checkbox" name="rating[]" value="5" class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 mr-3"
+                <?php if (in_array('5', $ratingChecked)) echo 'checked'; ?> />
               <span>5 Stars</span>
             </label>
           </li>

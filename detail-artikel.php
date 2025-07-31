@@ -1,7 +1,32 @@
 <?php
 require_once 'config/db.php';
+session_start();
 
 $articleId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+// Hapus komentar jika ada POST hapus
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comment'])) {
+    $userId = $_SESSION['user_id'] ?? 0;
+    $commentId = intval($_POST['comment_id'] ?? 0);
+    if ($userId && $commentId) {
+        $stmt = $conn->prepare("DELETE FROM article_comments WHERE id = ? AND user_id = ?");
+        $stmt->bind_param('ii', $commentId, $userId);
+        $stmt->execute();
+    }
+}
+
+// Edit komentar jika ada POST edit
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_comment'])) {
+    $userId = $_SESSION['user_id'] ?? 0;
+    $commentId = intval($_POST['comment_id'] ?? 0);
+    $commentText = trim($_POST['comment'] ?? '');
+    if ($userId && $commentId && $commentText) {
+        $stmt = $conn->prepare("UPDATE article_comments SET comment = ? WHERE id = ? AND user_id = ?");
+        $stmt->bind_param('sii', $commentText, $commentId, $userId);
+        $stmt->execute();
+    }
+}
+
 $article = null;
 
 if ($articleId) {
@@ -10,6 +35,31 @@ if ($articleId) {
     $stmt->execute();
     $result = $stmt->get_result();
     $article = $result->fetch_assoc();
+}
+
+// Ambil komentar artikel
+$comments = [];
+if ($articleId) {
+    $stmt = $conn->prepare("SELECT c.*, u.name AS user_name FROM article_comments c LEFT JOIN users u ON c.user_id = u.id WHERE c.article_id = ? ORDER BY c.created_at DESC");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $comments[] = $row;
+    }
+}
+?>
+<?php
+function timeAgo($datetime) {
+    if (!$datetime) return '-';
+    $timestamp = strtotime($datetime);
+    $diff = time() - $timestamp;
+
+    if ($diff < 60) return 'baru saja';
+    if ($diff < 3600) return floor($diff / 60) . ' menit yang lalu';
+    if ($diff < 86400) return floor($diff / 3600) . ' jam yang lalu';
+    if ($diff < 604800) return floor($diff / 86400) . ' hari yang lalu';
+    return date('d M Y H:i', $timestamp);
 }
 ?>
 <!DOCTYPE html>
@@ -20,8 +70,9 @@ if ($articleId) {
     <title><?php echo $article ? htmlspecialchars($article['title']) : 'Artikel Tidak Ditemukan'; ?> - GreenNest</title>
     <link rel="stylesheet" href="./src/output.css" />
     <link rel="stylesheet" href="./src/style.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-</head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
+    <link rel="icon" href="./src/img/favicon.ico" type="image/x-icon" />
+  </head>
 <body class="min-h-screen ">
     <?php include('component/navbar.php'); ?>
     <main class="pt-16 bg-white">
@@ -87,7 +138,7 @@ if ($articleId) {
                       <span><?php echo date('d M Y', strtotime($rel['created_at'])); ?></span>
                     </div>
                     <a href="detail-artikel.php?id=<?php echo $rel['id']; ?>">
-                      <h3 class="text-base font-semibold text-gray-800 hover:text-primary transition-colors"><?php echo htmlspecialchars($rel['title'] ?? ''); ?></h3>
+                      <h3 class="text-base font-medium text-gray-800 hover:text-primary transition-colors"><?php echo htmlspecialchars($rel['title'] ?? ''); ?></h3>
                     </a>
                     <p class="text-sm text-gray-600 leading-relaxed"><?php echo htmlspecialchars($rel['excerpt'] ?? ''); ?></p>
                   </div>
@@ -100,7 +151,135 @@ if ($articleId) {
             <?php endif; ?>
           </div>
         </section>
+        
+        <hr class="my-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" />
+
+        <!-- Komentar Artikel Section -->
+        <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" id="comments">
+          <h2 class="text-2xl font-semibold text-gray-900 mb-6">Komentar Artikel</h2>
+
+          <!-- Form Komentar -->
+          <?php if (isset($_SESSION['user_id'])): ?>
+            <form action="submit-article-comment.php" method="POST" class="mb-8 space-y-4">
+              <input type="hidden" name="article_id" value="<?php echo $articleId; ?>">
+              <textarea name="comment" rows="3" class="w-full border rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="Tulis komentar Anda..." required></textarea>
+              <button type="submit" class="bg-primary text-white px-6 py-2 rounded-full hover:bg-opacity-90 transition">Kirim Komentar</button>
+            </form>
+          <?php else: ?>
+            <div class="mb-8 text-gray-500">
+    Silakan
+    <a href="login.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>" class="text-primary underline">login</a>
+    untuk menulis komentar.
+  </div>
+          <?php endif; ?>
+
+          <!-- Daftar Komentar -->
+          <div class="space-y-6">
+            <?php if (empty($comments)): ?>
+              <p class="text-gray-400 italic">Belum ada komentar untuk artikel ini.</p>
+            <?php else: ?>
+              <?php
+              $userId = $_SESSION['user_id'] ?? 0;
+              foreach ($comments as $comment): ?>
+                <?php
+                  $date = !empty($comment['created_at']) ? date('d/m/Y H:i', strtotime($comment['created_at'])) : '-';
+                  $initial = strtoupper(substr($comment['user_name'] ?? 'A', 0, 1));
+                  $isOwner = ($userId && $userId == ($comment['user_id'] ?? 0));
+                ?>
+                <div class="bg-white rounded-xl shadow-md p-5 flex gap-4 items-start group hover:shadow-lg transition relative">
+                  <!-- Avatar -->
+                  <div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-xl">
+                    <?php echo $initial; ?>
+                  </div>
+                  <!-- Comment Content -->
+                  <div class="flex-1 flex flex-col">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="font-semibold text-gray-800"><?php echo htmlspecialchars($comment['user_name'] ?? 'Anon'); ?></span>
+                      <?php if ($isOwner): ?>
+                        <!-- Meatball Button -->
+                        <div class="relative inline-block text-left">
+                          <button type="button" class="meatball-btn p-2 rounded-full hover:bg-gray-100 focus:outline-none" onclick="toggleDropdown(this)">
+                            <svg width="20" height="20" fill="currentColor" class="text-gray-500" viewBox="0 0 20 20">
+                              <circle cx="4" cy="10" r="2"/>
+                              <circle cx="10" cy="10" r="2"/>
+                              <circle cx="16" cy="10" r="2"/>
+                            </svg>
+                          </button>
+                          <div class="dropdown-menu absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
+                            <button type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="openEditModal(<?php echo $comment['id']; ?>, '<?php echo htmlspecialchars(addslashes($comment['comment'])); ?>'); closeAllDropdowns();">Edit</button>
+                            <form method="POST" onsubmit="return confirm('Hapus komentar ini?')" class="block">
+                              <input type="hidden" name="comment_id" value="<?php echo $comment['id']; ?>">
+                              <input type="hidden" name="delete_comment" value="1">
+                              <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Hapus</button>
+                            </form>
+                          </div>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                    <div class="text-gray-700 leading-relaxed mb-2"><?php echo nl2br(htmlspecialchars($comment['comment'])); ?></div>
+                    <!-- Date/Time pojok kanan bawah -->
+                    <div class="flex justify-end">
+                      <span class="text-xs text-gray-400"><?php echo timeAgo($comment['created_at'] ?? null); ?></span>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </section>
+
+        <!-- Modal Edit Komentar -->
+        <div id="editCommentModal" class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 hidden">
+          <form method="POST" class="bg-white rounded-xl p-6 w-full max-w-md shadow-lg space-y-4">
+            <input type="hidden" name="comment_id" id="editCommentId">
+            <input type="hidden" name="edit_comment" value="1">
+            <label class="block font-semibold mb-2">Edit Komentar</label>
+            <textarea name="comment" id="editCommentText" rows="4" class="w-full border rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary outline-none transition-all" required></textarea>
+            <div class="flex justify-end gap-2">
+              <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Batal</button>
+              <button type="submit" class="px-4 py-2 rounded bg-primary text-white hover:bg-opacity-90">Simpan</button>
+            </div>
+          </form>
+        </div>
+
+        <script>
+        function toggleDropdown(btn) {
+          closeAllDropdowns();
+          const menu = btn.parentElement.querySelector('.dropdown-menu');
+          if (menu) menu.classList.toggle('hidden');
+        }
+        function closeAllDropdowns() {
+          document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+        }
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.meatball-btn') && !e.target.closest('.dropdown-menu')) {
+            closeAllDropdowns();
+          }
+        });
+        function openEditModal(id, comment) {
+          document.getElementById('editCommentId').value = id;
+          document.getElementById('editCommentText').value = comment;
+          document.getElementById('editCommentModal').classList.remove('hidden');
+        }
+        function closeEditModal() {
+          document.getElementById('editCommentModal').classList.add('hidden');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+  // Cek apakah user belum login
+  <?php if (!isset($_SESSION['user_id'])): ?>
+    const commentButton = document.querySelector('button[type="submit"].bg-primary');
+    if (commentButton) {
+      commentButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'login.php';
+      });
+    }
+  <?php endif; ?>
+});
+        </script>
     </main>
     <?php include('component/footer.php'); ?>
+
+    <script src="./src/script.js"></script>
 </body>
 </html>

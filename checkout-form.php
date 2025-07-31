@@ -1,3 +1,107 @@
+<?php
+require_once 'config/db.php'; // pastikan file ini menginisialisasi $conn
+session_start(); // jika menggunakan session untuk user
+
+$userId = $_SESSION['user_id'] ?? 1; // Ganti dengan session user asli
+
+function getCartItems($userId, $conn) {
+    $cartItems = [];
+    $cartStmt = $conn->prepare("SELECT id FROM cart WHERE user_id = ?");
+    $cartStmt->bind_param('i', $userId);
+    $cartStmt->execute();
+    $cartRes = $cartStmt->get_result();
+    $cartId = $cartRes->fetch_assoc()['id'] ?? null;
+
+    if ($cartId) {
+        $itemStmt = $conn->prepare(
+            "SELECT ci.*, p.name, p.price, p.stock, pi.image_url
+             FROM cart_items ci
+             JOIN products p ON ci.product_id = p.id
+             LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1
+             WHERE ci.cart_id = ?"
+        );
+        $itemStmt->bind_param('i', $cartId);
+        $itemStmt->execute();
+        $itemRes = $itemStmt->get_result();
+        while ($row = $itemRes->fetch_assoc()) {
+            $cartItems[] = $row;
+        }
+    }
+    return $cartItems;
+}
+
+function saveOrder($userId, $address, $total, $shippingCost, $paymentMethod, $conn) {
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, order_date, status, total_amount, shipping_cost, payment_method, shipping_address, created_at) VALUES (?, NOW(), 'pending', ?, ?, ?, ?, NOW())");
+    $stmt->bind_param('iddss', $userId, $total, $shippingCost, $paymentMethod, $address);
+    $stmt->execute();
+    return $conn->insert_id;
+}
+
+function saveOrderItems($orderId, $cartItems, $conn) {
+    foreach ($cartItems as $item) {
+        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param('iiid', $orderId, $item['product_id'], $item['quantity'], $item['price']);
+        $stmt->execute();
+        // Update stock
+        $update = $conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+        $update->bind_param('ii', $item['quantity'], $item['product_id']);
+        $update->execute();
+    }
+}
+
+function clearCart($userId, $conn) {
+    $cartStmt = $conn->prepare("SELECT id FROM cart WHERE user_id = ?");
+    $cartStmt->bind_param('i', $userId);
+    $cartStmt->execute();
+    $cartRes = $cartStmt->get_result();
+    $cartId = $cartRes->fetch_assoc()['id'] ?? null;
+    if ($cartId) {
+        $conn->query("DELETE FROM cart_items WHERE cart_id = $cartId");
+        $conn->query("DELETE FROM cart WHERE id = $cartId");
+    }
+}
+
+// Proses form
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'] ?? '';
+    $address = $_POST['address'] ?? '';
+    $city = $_POST['city'] ?? '';
+    $zip = $_POST['zip'] ?? '';
+    $state = $_POST['state'] ?? '';
+    $phone = $_POST['phone'] ?? '';
+    $payment = $_POST['payment'] ?? '';
+    $shipping = $_POST['shipping'] ?? '';
+    $fullAddress = "$address, $city, $state, $zip";
+
+    $cartItems = getCartItems($userId, $conn);
+    if (empty($cartItems)) {
+        $error = "Keranjang kosong!";
+    } else {
+        // Hitung total
+        $total = 0;
+        foreach ($cartItems as $item) {
+            if ($item['stock'] < $item['quantity']) {
+                $error = "Stok produk {$item['name']} tidak cukup!";
+                break;
+            }
+            $total += $item['price'] * $item['quantity'];
+        }
+        $shippingCost = 0;
+        if ($shipping == 'Express Shipping') $shippingCost = 15;
+        if ($shipping == 'Next Day Delivery') $shippingCost = 25;
+        $total += $shippingCost;
+
+        if (!isset($error)) {
+            $orderId = saveOrder($userId, $fullAddress, $total, $shippingCost, $payment, $conn);
+            saveOrderItems($orderId, $cartItems, $conn);
+            clearCart($userId, $conn);
+            header("Location: payment-simulation.php?order_id=$orderId");
+            exit;
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -13,6 +117,8 @@
    
   <!-- memasukan navbar -->
     <?php include './component/navbar.php'; ?>
+
+
 
     <main class="pt-28 px-4 lg:px-16 container mx-auto">
       <!-- Main Content -->
@@ -34,40 +140,48 @@
             </div>
           </div>
 
-          <!-- Cart Summary for Mobile -->
-          <div class="md:hidden mb-8 bg-gray-50 p-4 rounded-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="font-medium">Cart Summary</h2>
-              <span class="text-sm text-gray-600">1 item</span>
+          <?php
+$cartItems = getCartItems($userId, $conn);
+$total = 0;
+foreach ($cartItems as $item) {
+    $total += $item['price'] * $item['quantity'];
+}
+?>
+<!-- Cart Summary for Mobile -->
+<div class="md:hidden mb-8 bg-gray-50 p-4 rounded-lg">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="font-medium">Cart Summary</h2>
+        <span class="text-sm text-gray-600"><?= count($cartItems) ?> item</span>
+    </div>
+    <?php foreach ($cartItems as $item): ?>
+    <div class="flex gap-4 mb-4">
+        <div class="relative">
+            <img src="<?= $item['image_url'] ?? './src/img/main-img-product.png' ?>" alt="<?= $item['name'] ?>" class="w-20 h-20 object-cover rounded-lg" />
+            <span class="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-xs"><?= $item['quantity'] ?></span>
+        </div>
+        <div class="flex-1">
+            <h3 class="font-medium"><?= $item['name'] ?></h3>
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-gray-400 line-through text-sm">$<?= number_format($item['price'],2) ?></span>
+                <span class="font-medium">$<?= number_format($item['price'],2) ?></span>
             </div>
-            <div class="flex gap-4 mb-4">
-              <div class="relative">
-                <img src="./src/img/main-img-product.png" alt="Snake Plant" class="w-20 h-20 object-cover rounded-lg" />
-                <span class="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-xs">1</span>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-medium">Snake Plant Laurentii</h3>
-                <p class="text-sm text-gray-600">Large / Isabella (12.5" wide)</p>
-                <div class="flex justify-between items-center mt-2">
-                  <span class="text-gray-400 line-through text-sm">$219.00</span>
-                  <span class="font-medium">$175.20</span>
-                </div>
-              </div>
-            </div>
-            <div class="border-t pt-4">
-              <div class="flex justify-between mb-2">
-                <span>Subtotal</span>
-                <span>$175.20</span>
-              </div>
-              <div class="flex justify-between text-sm text-gray-600">
-                <span>Shipping</span>
-                <span>Calculated at next step</span>
-              </div>
-            </div>
-          </div>
+        </div>
+    </div>
+    <?php endforeach; ?>
+    <div class="border-t pt-4">
+        <div class="flex justify-between mb-2">
+            <span>Subtotal</span>
+            <span>$<?= number_format($total,2) ?></span>
+        </div>
+        <div class="flex justify-between text-sm text-gray-600">
+            <span>Shipping</span>
+            <span>Calculated at next step</span>
+        </div>
+    </div>
+</div>
 
           <!-- Original Form Content -->
-          <form class="space-y-6" id="checkoutForm" method="GET" action="payment-simulation.php">
+          <form class="space-y-6" id="checkoutForm" method="POST" action="">
             <!-- Contact Section -->
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-medium">Contact</h2>
@@ -122,41 +236,21 @@
                 <!-- City Input -->
                 <input type="text" name="city" placeholder="City" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required />
 
-                <!-- ZIP Code Select (Mobile: Full width, Desktop: 1 column) -->
-                <div class="relative col-span-1 w-full">
-                  <select class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
-                    <option value="" disabled selected>ZIP code</option>
-                    <option value="10001">10001</option>
-                    <option value="20001">20001</option>
-                    <option value="30301">30301</option>
-                    <option value="94101">94101</option>
-                    <option value="75201">75201</option>
-                    <!-- Add more ZIP codes here as needed -->
-                  </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4">
-                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                    </svg>
-                  </div>
-                </div>
+                <!-- ZIP Code Select -->
+                <select name="zip" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                  <option value="" disabled selected>ZIP code</option>
+                  <option value="10001">10001</option>
+                  <option value="20001">20001</option>
+                  <!-- ... -->
+                </select>
 
-                <!-- State Select (Mobile: Full width, Desktop: 1 column) -->
-                <div class="relative col-span-1 w-full">
-                  <select class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
-                    <option value="" disabled selected>State</option>
-                    <option value="NY">New York</option>
-                    <option value="CA">California</option>
-                    <option value="TX">Texas</option>
-                    <option value="FL">Florida</option>
-                    <option value="IL">Jakarta</option>
-                    <!-- Add more states here as needed -->
-                  </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4">
-                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                    </svg>
-                  </div>
-                </div>
+                <!-- State Select -->
+                <select name="state" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                  <option value="" disabled selected>State</option>
+                  <option value="NY">New York</option>
+                  <option value="CA">California</option>
+                  <!-- ... -->
+                </select>
               </div>
 
               <!-- Phone -->
@@ -187,7 +281,7 @@
                 <!-- Standard Shipping -->
                 <label class="shipping-option flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors" data-active="true">
                   <div class="flex items-center gap-3">
-                    <input type="radio" name="shipping" class="form-radio text-primary" />
+                    <input type="radio" name="shipping" value="Standard Shipping" required class="form-radio text-primary" />
                     <div>
                       <p class="font-medium">Standard Shipping</p>
                       <p class="text-sm text-gray-600">4-5 business days</p>
@@ -199,7 +293,7 @@
                 <!-- Express Shipping -->
                 <label class="shipping-option flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors" data-active="false">
                   <div class="flex items-center gap-3">
-                    <input type="radio" name="shipping" class="form-radio text-primary" />
+                    <input type="radio" name="shipping" value="Express Shipping" class="form-radio text-primary" />
                     <div>
                       <p class="font-medium">Express Shipping</p>
                       <p class="text-sm text-gray-600">2-3 business days</p>
@@ -211,7 +305,7 @@
                 <!-- Next Day Delivery -->
                 <label class="shipping-option flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors" data-active="false">
                   <div class="flex items-center gap-3">
-                    <input type="radio" name="shipping" class="form-radio text-primary" />
+                    <input type="radio" name="shipping" value="Next Day Delivery" class="form-radio text-primary" />
                     <div>
                       <p class="font-medium">Next Day Delivery</p>
                       <p class="text-sm text-gray-600">Next business day</p>
@@ -260,96 +354,86 @@
         </div>
 
         <!-- Sidebar - Hidden on mobile -->
-        <aside class="hidden md:block w-[520px] bg-primary p-6 rounded-lg h-fit sticky top-28 order-1 md:order-2" id="sidebar">
-          <!-- Order Summary -->
-          <div class="space-y-6">
-            <!-- Product Item -->
-            <div class="flex gap-4">
-              <div class="relative">
-                <img src="./src/img/main-img-product.png" alt="Snake Plant" class="w-20 h-20 object-cover rounded-lg" />
-                <span class="absolute -top-2 -right-2 w-5 h-5 bg-white text-primary rounded-full flex items-center justify-center text-xs">1</span>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-medium text-white">Snake Plant Laurentii</h3>
-                <p class="text-sm text-gray-200">Large / Isabella (12.5" wide) / Top Half Black</p>
-                <div class="flex items-center gap-2 mt-1">
-                  <div class="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded">
-                    <span class="text-xs text-white">EARTH DAY SALE</span>
-                  </div>
-                  <span class="text-xs text-white">(-$43.80)</span>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-white/60 line-through text-sm">$219.00</p>
-                <p class="font-medium text-white">$175.20</p>
-              </div>
-            </div>
+        <?php
+// Hitung subtotal, shipping, dan total untuk sidebar
+$subtotal = 0;
+foreach ($cartItems as $item) {
+    $subtotal += $item['price'] * $item['quantity'];
+}
 
-            <!-- Discount Input -->
-            <div class="flex gap-2">
-              <input type="text" placeholder="Discount code or gift card" class="flex-1 px-4 py-2.5 rounded-lg border border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent" />
-              <button class="bg-white text-primary px-6 rounded-lg hover:bg-opacity-90">apply</button>
-            </div>
+// Default shipping label dan cost
+$shippingLabel = 'Standard Shipping';
+$shippingCost = 0;
 
-            <!-- Applied Discount -->
-            <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-md">
-              <span class="text-sm text-white">EARTH DAY SALE</span>
-              <button class="text-white hover:text-white/80">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+// Jika ada POST (user sudah memilih shipping), ambil dari POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $shippingLabel = $_POST['shipping'] ?? 'Standard Shipping';
+    if ($shippingLabel == 'Express Shipping') $shippingCost = 15;
+    if ($shippingLabel == 'Next Day Delivery') $shippingCost = 25;
+    if ($shippingLabel == 'Standard Shipping') $shippingCost = 0;
+}
 
-            <!-- Order Summary Details -->
-            <div class="space-y-3 pt-3">
-              <div class="flex justify-between">
-                <span class="text-white">Subtotal</span>
-                <span class="text-white">$175.20</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-white">Shipping</span>
-                <span class="text-white/80">Yogyakarta, Indonesia</span>
-              </div>
-              <div class="flex justify-between items-center pt-3 border-t-2 border-white/30">
-                <span class="text-xl font-medium text-white">Total</span>
-                <div class="text-right">
-                  <span class="text-sm text-white/80">USD</span>
-                  <span class="text-xl font-medium text-white">$175.20</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-1 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 15 16" fill="none">
-                  <mask id="mask0_95_5951" style="mask-type: luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="15" height="16">
-                    <path d="M14.5 1V15H0.5V1H14.5Z" fill="white" stroke="white" />
-                  </mask>
-                  <g mask="url(#mask0_95_5951)">
-                    <mask id="path-2-inside-1_95_5951" fill="white">
-                      <path
-                        d="M11.25 2.10715H8.49638C8.13626 2.10728 7.77986 2.18002 7.44849 2.32104C7.11712 2.46205 6.81759 2.66844 6.56781 2.92786L1.62853 8.05572C1.33657 8.35898 1.17527 8.76469 1.17927 9.18563C1.18328 9.60657 1.35228 10.0091 1.64995 10.3068L5.37853 14.0354C5.62663 14.2831 5.96196 14.4236 6.31252 14.4268C6.66309 14.43 7.00094 14.2956 7.25353 14.0525L12.735 8.77465C12.9427 8.57471 13.1079 8.33493 13.2207 8.06964C13.3336 7.80435 13.3918 7.51901 13.3917 7.23072V4.25C13.3917 3.68168 13.166 3.13664 12.7641 2.73478C12.3622 2.33291 11.8172 2.10715 11.2489 2.10715" />
-                    </mask>
-                    <path
-                      d="M8.49638 2.10715V1.10715L8.49602 1.10715L8.49638 2.10715ZM6.56781 2.92786L7.28804 3.6216L7.28817 3.62146L6.56781 2.92786ZM1.62853 8.05572L0.9083 7.36198L0.908106 7.36218L1.62853 8.05572ZM1.64995 10.3068L2.35706 9.59968L2.35704 9.59966L1.64995 10.3068ZM5.37853 14.0354L4.67142 14.7425L4.672 14.743L5.37853 14.0354ZM7.25353 14.0525L7.947 14.773L7.94713 14.7729L7.25353 14.0525ZM12.735 8.77465L12.0415 8.05419L12.0413 8.05429L12.735 8.77465ZM13.3917 7.23072H12.3917V7.23076L13.3917 7.23072ZM11.25 2.10715V1.10715H8.49638V2.10715V3.10715H11.25V2.10715ZM8.49638 2.10715L8.49602 1.10715C8.00145 1.10733 7.51199 1.20723 7.05692 1.40089L7.44849 2.32104L7.84006 3.24119C8.04772 3.15282 8.27106 3.10723 8.49674 3.10715L8.49638 2.10715ZM7.44849 2.32104L7.05692 1.40089C6.60184 1.59455 6.19049 1.87799 5.84745 2.23426L6.56781 2.92786L7.28817 3.62146C7.4447 3.45889 7.63241 3.32956 7.84006 3.24119L7.44849 2.32104ZM6.56781 2.92786L5.84759 2.23412L0.9083 7.36198L1.62853 8.05572L2.34875 8.74946L7.28804 3.6216L6.56781 2.92786ZM1.62853 8.05572L0.908106 7.36218C0.434497 7.85415 0.172817 8.51229 0.179317 9.19515L1.17927 9.18563L2.17923 9.17611C2.17771 9.01709 2.23865 8.86382 2.34894 8.74926L1.62853 8.05572ZM1.17927 9.18563L0.179317 9.19515C0.185818 9.87801 0.459979 10.5311 0.942868 11.0139L1.64995 10.3068L2.35704 9.59966C2.24459 9.48722 2.18074 9.33514 2.17923 9.17611L1.17927 9.18563ZM1.64995 10.3068L0.942847 11.0139L4.67142 14.7425L5.37853 14.0354L6.08563 13.3283L2.35706 9.59968L1.64995 10.3068ZM5.37853 14.0354L4.672 14.743C5.10535 15.1757 5.69106 15.4212 6.30338 15.4268L6.31252 14.4268L6.32167 13.4268C6.23286 13.426 6.14791 13.3904 6.08505 13.3277L5.37853 14.0354ZM6.31252 14.4268L6.30338 15.4268C6.9157 15.4324 7.50581 15.1976 7.947 14.773L7.25353 14.0525L6.56005 13.332C6.49607 13.3936 6.41048 13.4277 6.32167 13.4268L6.31252 14.4268ZM7.25353 14.0525L7.94713 14.7729L13.4286 9.495L12.735 8.77465L12.0413 8.05429L6.55992 13.3321L7.25353 14.0525ZM12.735 8.77465L13.4285 9.4951C13.7331 9.20187 13.9754 8.85018 14.1409 8.46109L13.2207 8.06964L12.3005 7.67818C12.2403 7.81967 12.1522 7.94756 12.0415 8.05419L12.735 8.77465ZM13.2207 8.06964L14.1409 8.46109C14.3065 8.072 14.3918 7.65351 14.3917 7.23068L13.3917 7.23072L12.3917 7.23076C12.3917 7.38452 12.3607 7.5367 12.3005 7.67818L13.2207 8.06964ZM13.3917 7.23072H14.3917V4.25H13.3917H12.3917V7.23072H13.3917ZM13.3917 4.25H14.3917C14.3917 3.41647 14.0606 2.61707 13.4712 2.02767L12.7641 2.73478L12.057 3.44188C12.2713 3.65621 12.3917 3.9469 12.3917 4.25H13.3917ZM12.7641 2.73478L13.4712 2.02767C12.8818 1.43827 12.0824 1.10715 11.2489 1.10715V2.10715V3.10715C11.552 3.10715 11.8427 3.22756 12.057 3.44188L12.7641 2.73478Z"
-                      fill="#80807F"
-                      mask="url(#path-2-inside-1_95_5951)" />
-                    <path
-                      d="M10.1787 5.21823C10.2356 5.21839 10.2812 5.26484 10.2812 5.32175C10.2811 5.37851 10.2355 5.42412 10.1787 5.42429C10.1218 5.42429 10.0754 5.37861 10.0752 5.32175C10.0752 5.26474 10.1217 5.21823 10.1787 5.21823Z"
-                      fill="#7B7B7B"
-                      stroke="#80807F" />
-                    <mask id="path-5-inside-2_95_5951" fill="white">
-                      <path d="M10.168 5.3107H10.1894V5.33213H10.168V5.3107Z" />
-                    </mask>
-                    <path
-                      d="M10.168 5.3107V4.3107H9.16797V5.3107H10.168ZM10.1894 5.3107H11.1894V4.3107H10.1894V5.3107ZM10.1894 5.33213V6.33213H11.1894V5.33213H10.1894ZM10.168 5.33213H9.16797V6.33213H10.168V5.33213ZM10.168 5.3107V6.3107H10.1894V5.3107V4.3107H10.168V5.3107ZM10.1894 5.3107H9.1894V5.33213H10.1894H11.1894V5.3107H10.1894ZM10.1894 5.33213V4.33213H10.168V5.33213V6.33213H10.1894V5.33213ZM10.168 5.33213H11.168V5.3107H10.168H9.16797V5.33213H10.168Z"
-                      fill="#80807F"
-                      mask="url(#path-5-inside-2_95_5951)" />
-                  </g>
-                </svg>
-                <span class="text-white">TOTAL SAVINGS $43.80</span>
-              </div>
-            </div>
-          </div>
-        </aside>
+$total = $subtotal + $shippingCost;
+?>
+
+<!-- Sidebar - Hidden on mobile -->
+<aside class="hidden md:block w-[520px] bg-primary p-6 rounded-lg h-fit sticky top-28 order-1 md:order-2" id="sidebar">
+  <!-- Order Summary -->
+  <div class="space-y-6">
+    <!-- Product Items -->
+    <?php foreach ($cartItems as $item): ?>
+    <div class="flex gap-4 mb-4">
+      <div class="relative">
+        <img src="<?= $item['image_url'] ?? './src/img/main-img-product.png' ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="w-20 h-20 object-cover rounded-lg" />
+        <span class="absolute -top-2 -right-2 w-5 h-5 bg-white text-primary rounded-full flex items-center justify-center text-xs"><?= $item['quantity'] ?></span>
+      </div>
+      <div class="flex-1">
+        <h3 class="font-medium text-white"><?= htmlspecialchars($item['name']) ?></h3>
+        <p class="text-sm text-gray-200"><?= $item['plant_size'] ?? '' ?></p>
+      </div>
+      <div class="text-right">
+        <?php if (!empty($item['price_old']) && $item['price_old'] > $item['price']): ?>
+          <p class="text-white/60 line-through text-sm">$<?= number_format($item['price_old'],2) ?></p>
+        <?php endif; ?>
+        <p class="font-medium text-white">$<?= number_format($item['price'],2) ?></p>
+      </div>
+    </div>
+    <?php endforeach; ?>
+
+    <!-- Discount Input (opsional, belum terintegrasi) -->
+    <div class="flex gap-2">
+      <input type="text" placeholder="Discount code or gift card" class="flex-1 px-4 py-2.5 rounded-lg border border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent" />
+      <button class="bg-white text-primary px-6 rounded-lg hover:bg-opacity-90">apply</button>
+    </div>
+
+    <!-- Order Summary Details -->
+    <div class="space-y-3 pt-3">
+      <div class="flex justify-between">
+        <span class="text-white">Subtotal</span>
+        <span class="text-white">$<?= number_format($subtotal,2) ?></span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-white">Shipping</span>
+        <span class="text-white/80"><?= htmlspecialchars($shippingLabel) ?> <?= $shippingCost > 0 ? '$'.number_format($shippingCost,2) : 'Free' ?></span>
+      </div>
+      <div class="flex justify-between items-center pt-3 border-t-2 border-white/30">
+        <span class="text-xl font-medium text-white">Total</span>
+        <div class="text-right">
+          <span class="text-sm text-white/80">USD</span>
+          <span class="text-xl font-medium text-white">$<?= number_format($total,2) ?></span>
+        </div>
+      </div>
+      <?php if ($subtotal > 0 && isset($item['price_old']) && $item['price_old'] > $item['price']): ?>
+      <div class="flex items-center gap-1 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 15 16" fill="none">
+          <!-- ...icon... -->
+        </svg>
+        <span class="text-white">TOTAL SAVINGS $<?= number_format($item['price_old'] - $item['price'],2) ?></span>
+      </div>
+      <?php endif; ?>
+    </div>
+  </div>
+</aside>
       </div>
 
       <!-- Mobile Checkout Fixed Bottom -->
@@ -369,22 +453,12 @@
       </div>
     </main>
 
+    <script src="./src/script.js"></script>
     <!-- footer -->
     <?php include './component/footer.php'; ?>
 
     <!-- Add this JavaScript code -->
     <script>
-      // Script untuk mengarahkan ke payment-simulation.php sesuai metode pembayaran
-      document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const paymentMethod = document.querySelector('input[name="payment"]:checked');
-        if (paymentMethod) {
-          const method = paymentMethod.value;
-          window.location.href = `payment-simulation.php?method=${method}`;
-        } else {
-          alert('Pilih metode pembayaran terlebih dahulu!');
-        }
-      });
       document.addEventListener("DOMContentLoaded", function () {
         const shippingOptions = document.querySelectorAll(".shipping-option");
 

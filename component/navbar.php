@@ -1,20 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cart Sidebar</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./src/output.css" />
-    <link rel="stylesheet" href="./src/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet" />
-
-</head>
-  <?php
-  session_start();
+<?php
   // Cek login
   $isLoggedIn = isset($_SESSION['user_id']);
-  $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
+  $userName = ($isLoggedIn && isset($_SESSION['user_name'])) ? $_SESSION['user_name'] : '';
   $userProfileImg = $isLoggedIn && isset($_SESSION['user_profile']) ? $_SESSION['user_profile'] : '';
   // Ambil inisial
   function getInitial($name) {
@@ -22,8 +9,33 @@
     if ($name === '') return '?';
     return strtoupper(substr($name, 0, 1));
   }
-  ?>
-  <body> 
+
+  // Ambil jumlah item di cart
+$cartCount = 0;
+if ($isLoggedIn) {
+  require_once __DIR__ . '/../config/db.php';
+  $userId = $_SESSION['user_id'];
+  // Ambil cart id user
+  $cartId = 0;
+  $stmt = $conn->prepare("SELECT id FROM cart WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+  $stmt->bind_param('i', $userId);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  if ($row = $result->fetch_assoc()) {
+    $cartId = $row['id'];
+  }
+  // Hitung total item di cart
+  if ($cartId) {
+    $stmt = $conn->prepare("SELECT SUM(quantity) AS total FROM cart_items WHERE cart_id = ?");
+    $stmt->bind_param('i', $cartId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+      $cartCount = intval($row['total']);
+    }
+  }
+}
+?>
  <header class="bg-white shadow-sm fixed w-full top-0 z-50">
       <nav class="mx-auto px-2 container md:px-16">
         <div class="flex items-center justify-between h-16">
@@ -38,7 +50,7 @@
               <li><a href="./index.php" class="text-primary transition-colors">Home</a></li>
               <li><a href="./list-product.php" class="text-primary transition-colors">Shop All</a></li>
               <li><a href="#gifts" class="text-primary transition-colors">Gifts</a></li>
-              <li><a href="#learn" class="text-primary transition-colors">Learn</a></li>
+              <li><a href="./listing-artikel.php" class="text-primary transition-colors">Article</a></li>
               <li><a href="#about" class="text-primary transition-colors">About Us</a></li>
             </ul>
           </div>
@@ -62,44 +74,64 @@
                 </button>
               </div>
             </div>
-            <a href="<?= $isLoggedIn ? './pengaturan.php' : './login.php' ?>" class="flex items-center justify-center w-10 aspect-square rounded-full hover:bg-gray-100 transition-colors text-primary z-20 relative">
-              <?php if ($isLoggedIn): ?>
-                <?php if ($userProfileImg): ?>
-                  <img src="<?= htmlspecialchars($userProfileImg) ?>" alt="Profile" class="w-8 aspect-square rounded-full object-cover" />
-                <?php else: ?>
-                  <div class="w-8 aspect-square rounded-full border border-primary text-primary flex items-center justify-center font-semibold text-xl text-center">
-                    <?= getInitial($userName) ?>
-                  </div>
-                <?php endif; ?>
-              <?php else: ?>
-                <!-- User icon -->
-                <span class="flex items-center justify-center w-8 aspect-square">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="29" height="28" viewBox="0 0 29 28" fill="none">
-                    <path
-                      d="M18.875 7C18.875 9.41625 16.9163 11.375 14.5 11.375C12.0838 11.375 10.125 9.41625 10.125 7C10.125 4.58375 12.0838 2.625 14.5 2.625C16.9163 2.625 18.875 4.58375 18.875 7Z"
-                      stroke="#45671E"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round" />
-                    <path
-                      d="M5.75134 23.4713C5.83337 18.7097 9.71887 14.875 14.5 14.875C19.2813 14.875 23.1669 18.7099 23.2487 23.4716C20.5854 24.6937 17.6225 25.375 14.5004 25.375C11.378 25.375 8.4148 24.6936 5.75134 23.4713Z"
-                      stroke="#45671E"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round" />
-                  </svg>
-                </span>
-              <?php endif; ?>
-            </a>
+          <!-- SOLUSI 1: Perbaikan dengan menambah CSS pointer-events dan z-index yang lebih tinggi -->
+<a href="<?= $isLoggedIn ? './pengaturan.php' : './login.php' ?>" 
+   class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center hover:bg-gray-100 transition-colors relative block"
+   style="z-index: 999; pointer-events: auto; position: relative;">
+    <?php if ($isLoggedIn): ?>
+        <?php if ($userProfileImg): ?>
+            <img src="<?= htmlspecialchars($userProfileImg) ?>" 
+                 alt="Profile" 
+                 class="w-full h-full object-cover rounded-full pointer-events-none" />
+        <?php else: ?>
+            <span class="w-full h-full flex items-center justify-center rounded-full border border-primary text-primary font-semibold text-xl pointer-events-none">
+                <?= getInitial($userName) ?>
+            </span>
+        <?php endif; ?>
+    <?php else: ?>
+        <span class="w-full h-full flex items-center justify-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="29" height="28" viewBox="0 0 29 28" fill="none" class="pointer-events-none">
+                <path
+                    d="M18.875 7C18.875 9.41625 16.9163 11.375 14.5 11.375C12.0838 11.375 10.125 9.41625 10.125 7C10.125 4.58375 12.0838 2.625 14.5 2.625C16.9163 2.625 18.875 4.58375 18.875 7Z"
+                    stroke="#45671E"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                <path
+                    d="M5.75134 23.4713C5.83337 18.7097 9.71887 14.875 14.5 14.875C19.2813 14.875 23.1669 18.7099 23.2487 23.4716C20.5854 24.6937 17.6225 25.375 14.5004 25.375C11.378 25.375 8.4148 24.6936 5.75134 23.4713Z"
+                    stroke="#45671E"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </span>
+    <?php endif; ?>
+</a>
+
                     <!-- Cart Icon -->
-                    <button id="cartButton" class="p-2 text-primary transition-colors hover:text-green-600 relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="8" cy="21" r="1"></circle>
-                            <circle cx="19" cy="21" r="1"></circle>
-                            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                        </svg>
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">1</span>
-                    </button>
+                    <?php if ($isLoggedIn): ?>
+    <button id="cartButton" class="p-2 text-primary transition-colors hover:text-primary relative">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"></circle>
+            <circle cx="19" cy="21" r="1"></circle>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <?= $cartCount ?>
+        </span>
+    </button>
+<?php else: ?>
+    <a href="./login.php" class="p-2 text-primary transition-colors hover:text-primary relative">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"></circle>
+            <circle cx="19" cy="21" r="1"></circle>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          0
+        </span>
+    </a>
+<?php endif; ?>
           </div>
 
           <!-- Mobile Menu Button -->
@@ -129,13 +161,13 @@
             <li><a href="./index.php" class="block px-4 py-2 text-primary hover:bg-gray-50">Home</a></li>
             <li><a href="./list-product.php" class="block px-4 py-2 text-primary hover:bg-gray-50">Shop All</a></li>
             <li><a href="#gifts" class="block px-4 py-2 text-primary hover:bg-gray-50">Gifts</a></li>
-            <li><a href="#learn" class="block px-4 py-2 text-primary hover:bg-gray-50">Learn</a></li>
+            <li><a href="./listing-article.php" class="block px-4 py-2 text-primary hover:bg-gray-50">Article</a></li>
             <li><a href="#about" class="block px-4 py-2 text-primary hover:bg-gray-50">About Us</a></li>
           </ul>
 
           <!-- User Actions -->
           <div class="py-4 space-y-2">
-            <a href="#" class="flex items-center px-4 py-2 text-primary hover:bg-gray-50">
+            <a href="./pengaturan.php" class="flex items-center px-4 py-2 text-primary hover:bg-gray-50">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -158,5 +190,3 @@
 
         <!-- cart sidebar -->
     <?php include 'cart-sidebar.php'; ?>
-    </body>
-       </html>

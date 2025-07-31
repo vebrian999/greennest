@@ -8,36 +8,33 @@ if (!isset($cardProduct)) return;
       <?php
         $badges = [];
 
-        // BEST SELLER
+        // Urutan prioritas badge
         if (!empty($cardProduct['is_best_seller']) || $cardProduct['product_label'] === 'BEST SELLER') {
             $badges[] = 'BEST SELLER';
         }
-        // NEW ARRIVAL
+        if (($cardProduct['stock'] ?? 0) <= 0) {
+            $badges[] = 'OUT OF STOCK';
+        }
+        if (($cardProduct['stock'] ?? 0) > 0 && ($cardProduct['stock'] ?? 0) < 50) {
+            $badges[] = 'LIMITED STOCK';
+        }
         if (!empty($cardProduct['created_at']) && strtotime($cardProduct['created_at']) >= strtotime('-30 days')) {
             $badges[] = 'NEW ARRIVAL';
         }
-        // POPULAR
         if (($cardProduct['review_count'] ?? 0) >= 10 || ($cardProduct['like_count'] ?? 0) >= 10) {
             $badges[] = 'POPULAR';
-        }
-        // LIMITED STOCK
-        if ($cardProduct['product_label'] === 'LIMITED STOCK') {
-            $badges[] = 'LIMITED STOCK';
-        }
-        // OUT OF STOCK
-        if ($cardProduct['product_label'] === 'OUT OF STOCK' || ($cardProduct['stock'] ?? 0) <= 0) {
-            $badges[] = 'OUT OF STOCK';
         }
 
         // Maksimal 2 badge saja
         $badges = array_slice($badges, 0, 2);
 
         foreach ($badges as $i => $badge) {
-            // Jarak antar badge 8px, mulai dari top: 12px
-            $top = 12 + ($i * 32);
-            echo '<div style="position:absolute;top:' . $top . 'px;left:8px;z-index:10;" class="bg-primary text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium mb-1">' . htmlspecialchars($badge) . '</div>';
+            $top = 12 + ($i * 22); // badge lebih mepet
+            echo '<div style="position:absolute;top:' . $top . 'px;left:8px;z-index:10;" class="bg-primary text-white px-2 md:px-2 py-0.5 rounded-full text-xs md:text-xs font-light mb-1">' . htmlspecialchars($badge) . '</div>';
         }
       ?>
+      <img src="<?php echo !empty($cardProduct['image_url']) ? htmlspecialchars($cardProduct['image_url']) : './src/img/product_default.png'; ?>" alt="Plant" class="w-full h-full object-cover" />
+    </div>
   </div>
   <div class="p-3 md:p-4">
     <div class="flex justify-between items-start mb-3 md:mb-4">

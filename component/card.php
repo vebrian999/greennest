@@ -6,11 +6,33 @@ if (!isset($cardProduct)) return;
     <div class="relative">
       <!-- Image carousel (hanya gambar utama) -->
       <div class="carousel-container h-[400px] relative">
-        <?php if (!empty($cardProduct['is_best_seller'])): ?>
-          <div class="absolute top-4 left-4 z-10 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Best Seller</div>
-        <?php endif; ?>
+        <?php
+          $badges = [];
+          // Urutan prioritas badge
+          if (!empty($cardProduct['is_best_seller']) || ($cardProduct['product_label'] ?? '') === 'BEST SELLER') {
+              $badges[] = 'BEST SELLER';
+          }
+          if (($cardProduct['stock'] ?? 0) <= 0) {
+              $badges[] = 'OUT OF STOCK';
+          }
+          if (($cardProduct['stock'] ?? 0) > 0 && ($cardProduct['stock'] ?? 0) < 50) {
+              $badges[] = 'LIMITED STOCK';
+          }
+          if (!empty($cardProduct['created_at']) && strtotime($cardProduct['created_at']) >= strtotime('-30 days')) {
+              $badges[] = 'NEW ARRIVAL';
+          }
+          if (($cardProduct['review_count'] ?? 0) >= 10 || ($cardProduct['like_count'] ?? 0) >= 10) {
+              $badges[] = 'POPULAR';
+          }
+          // Maksimal 2 badge saja
+          $badges = array_slice($badges, 0, 2);
+          foreach ($badges as $i => $badge) {
+              $top = 16 + ($i * 36);
+              echo '<div style="position:absolute;top:' . $top . 'px;left:16px;z-index:10;" class="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium mb-1">' . htmlspecialchars($badge) . '</div>';
+          }
+        ?>
         <div class="carousel-slides h-full">
-          <img src="<?php echo !empty($cardProduct['image_url']) ? htmlspecialchars($cardProduct['image_url']) : './src/img/plant (1).png'; ?>" alt="Plant view" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
+          <img src="<?php echo !empty($cardProduct['image_url']) ? htmlspecialchars($cardProduct['image_url']) : './src/img/product_default.png'; ?>" alt="Plant view" class="w-full h-full object-cover absolute transition-opacity duration-500 ease-in-out" />
         </div>
       </div>
     </div>

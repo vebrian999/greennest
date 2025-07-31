@@ -46,6 +46,41 @@ if ($productId) {
         $userLiked = $res2->num_rows > 0;
     }
 }
+
+// Ambil cart items jika user login
+$cartItems = [];
+$cartSubtotal = 0;
+if ($userId) {
+    // Ambil cart id user
+    $cartStmt = $conn->prepare("SELECT id FROM cart WHERE user_id = ?");
+    $cartStmt->bind_param('i', $userId);
+    $cartStmt->execute();
+    $cartRes = $cartStmt->get_result();
+    $cartId = $cartRes->fetch_assoc()['id'] ?? null;
+
+    if ($cartId) {
+        $itemStmt = $conn->prepare(
+            "SELECT 
+                ci.id as cart_item_id, 
+                ci.quantity, 
+                p.id as product_id, 
+                p.name, 
+                p.price, 
+                pi.image_url
+            FROM cart_items ci
+            JOIN products p ON ci.product_id = p.id
+            LEFT JOIN product_images pi ON pi.product_id = p.id
+            WHERE ci.cart_id = ?"
+        );
+        $itemStmt->bind_param('i', $cartId);
+        $itemStmt->execute();
+        $itemRes = $itemStmt->get_result();
+        while ($row = $itemRes->fetch_assoc()) {
+            $cartItems[] = $row;
+            $cartSubtotal += $row['price'] * $row['quantity'];
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,11 +97,8 @@ if ($productId) {
     <!-- memasukan navbar -->
     <?php include './component/navbar.php'; ?>
 
-    <main class="pt-16">
-      <div id="content">
-        <!-- detail product -->
-        <section>
-          <div class="mx-auto container px-8 md:px-20">
+<section>
+          <div class="mx-auto container px-8 md:px-20 md:pt-16 pt-8">
             <div class="py-10">
               <?php if (!$product): ?>
                 <div class="text-center py-16">
@@ -124,7 +156,7 @@ if ($productId) {
                         </defs>
                       </svg>
                       <p class="text-sm">Guarantee</p>
-                      <p class="text-xs">If your plant dies within 30 days, we'll replace it for free.<a href="#" class="underline"> Learn More</a></p>
+                      <p class="text-xs">If your plant dies within 30 days, we'll replace it for free.<a href="#" class="underline"> Learn More</a></p>
                     </div>
                   </div>
                 </div>
@@ -148,18 +180,18 @@ if ($productId) {
 
                   <!-- Product Description -->
                   <?php
-function short_paragraph($text, $maxWords = 20) {
-  $text = strip_tags($text);
-  $words = preg_split('/\s+/', $text);
-  if (count($words) > $maxWords) {
-    return implode(' ', array_slice($words, 0, $maxWords)) . '.';
-  }
-  return implode(' ', $words);
-}
-?>
-<p class="text-gray-700 mb-6 md:text-base text-sm">
-  <?php echo htmlspecialchars(short_paragraph($product['description'] ?? '')); ?>
-</p>
+                    function short_paragraph($text, $maxWords = 20) {
+                      $text = strip_tags($text);
+                      $words = preg_split('/\s+/', $text);
+                      if (count($words) > $maxWords) {
+                        return implode(' ', array_slice($words, 0, $maxWords)) . '.';
+                      }
+                      return implode(' ', $words);
+                    }
+                    ?>
+                    <p class="text-gray-700 mb-6 md:text-base text-sm">
+                      <?php echo htmlspecialchars(short_paragraph($product['description'] ?? '')); ?>
+                    </p>
 
                   <!-- Stock Info -->
                   <p class="text-gray-600 mb-6 md:text-base text-sm">Stock: <?php echo htmlspecialchars($product['stock']); ?></p>
@@ -191,57 +223,46 @@ function short_paragraph($text, $maxWords = 20) {
                       </div>
                       <button class="px-4 py-2.5 text-primary hover:bg-gray-100 transition-colors rounded-r-full" onclick="incrementQuantity()">+</button>
                     </div>
-                    <a
-                      href="./checkout-form.php"
-                      class="bg-primary flex-1 flex gap-2 items-center justify-center text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors">
-                      Add to Cart
-                    </a>
+                   <div class="w-full">
+                     <?php if ($userId): ?>
+  <form id="addToCartForm" method="post" action="add-to-cart.php">
+    <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
+    <input type="hidden" name="quantity" id="cartQuantity" value="1">
+    <button
+      type="submit"
+      class="w-full bg-primary flex-1 flex gap-2 items-center justify-center text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors <?php echo ($product['stock'] ?? 0) <= 0 ? 'bg-gray-400 cursor-not-allowed pointer-events-none text-gray-300 hover:bg-opacity-100' : ''; ?>"
+      <?php echo ($product['stock'] ?? 0) <= 0 ? 'disabled' : ''; ?>
+    >
+      Add to Cart
+    </button>
+  </form>
+<?php else: ?>
+  <a href="login.php" class="w-full bg-primary flex-1 flex gap-2 items-center justify-center text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors">
+    Add to Cart
+  </a>
+<?php endif; ?>
+
+                    </div>
 
                     <!-- Like Button with Heart Icon and Count -->
-                    <button id="like-btn" class="flex items-center space-x-1 rounded-full bg-pink-200 text-white px-3 py-2.5 text-sm font-medium transition duration-200">
-                      <!-- Heart Icon -->
-                      <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition duration-200" fill="<?php echo $userLiked ? '#ef4444' : 'none'; ?>" viewBox="0 0 24 24" stroke="<?php echo $userLiked ? '#ef4444' : 'white'; ?>" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <!-- Like Count -->
-                      <span id="like-count" class="font-semibold text-base <?php echo $userLiked ? 'text-red-500' : 'text-white'; ?>"><?php echo $likeCount; ?></span>
-                    </button>
-
-                    <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const likeBtn = document.getElementById('like-btn');
-  const likeCount = document.getElementById('like-count');
-  const likeIcon = document.getElementById('like-icon');
-  let liked = <?php echo $userLiked ? 'true' : 'false'; ?>;
-  let productId = <?php echo $productId; ?>;
-
-  likeBtn.addEventListener('click', function () {
-    fetch('product-like.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'product_id=' + productId
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        liked = data.liked;
-        likeCount.textContent = data.total;
-        if (liked) {
-          likeIcon.setAttribute('fill', '#ef4444');
-          likeIcon.setAttribute('stroke', '#ef4444');
-          likeCount.classList.remove('text-white');
-          likeCount.classList.add('text-red-500');
-        } else {
-          likeIcon.setAttribute('fill', 'none');
-          likeIcon.setAttribute('stroke', 'white');
-          likeCount.classList.remove('text-red-500');
-          likeCount.classList.add('text-white');
-        }
-      }
-    });
-  });
-});
-</script>
+                  <?php if ($userId): ?>
+  <form method="post" action="" style="display:inline;">
+    <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
+    <button type="submit" id="like-btn" class="flex items-center space-x-1 rounded-full bg-pink-200 text-white px-3 py-2.5 text-sm font-medium transition duration-200">
+      <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition duration-200" fill="<?php echo $userLiked ? '#ef4444' : 'none'; ?>" viewBox="0 0 24 24" stroke="<?php echo $userLiked ? '#ef4444' : 'white'; ?>" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+      <span id="like-count" class="font-semibold text-base <?php echo $userLiked ? 'text-red-500' : 'text-white'; ?>"><?php echo $likeCount; ?></span>
+    </button>
+  </form>
+<?php else: ?>
+  <a href="login.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>" id="like-btn" class="flex items-center space-x-1 rounded-full bg-pink-200 text-white px-3 py-2.5 text-sm font-medium transition duration-200">
+    <svg id="like-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition duration-200" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+    <span id="like-count" class="font-semibold text-base text-white"><?php echo $likeCount; ?></span>
+  </a>
+<?php endif; ?>
                   </div>
 
                   <!-- Product Accordion Container -->
@@ -312,72 +333,8 @@ document.addEventListener('DOMContentLoaded', function () {
               </div>
               <?php endif; ?>
             </div>
-
-            <!-- dropdown script -->
-            <!-- Move this script just before closing body tag -->
-            <script>
-              // Get all dropdown buttons
-              const dropdownButtons = document.querySelectorAll("[data-collapse-toggle]");
-
-              dropdownButtons.forEach((button) => {
-                button.addEventListener("click", () => {
-                  // Get target dropdown
-                  const targetId = button.getAttribute("data-collapse-toggle");
-                  const dropdown = document.getElementById(targetId);
-
-                  // Get arrow icon
-                  const arrow = button.querySelector("svg");
-
-                  // Close all other dropdowns
-                  dropdownButtons.forEach((otherButton) => {
-                    if (otherButton !== button) {
-                      const otherId = otherButton.getAttribute("data-collapse-toggle");
-                      const otherDropdown = document.getElementById(otherId);
-                      const otherArrow = otherButton.querySelector("svg");
-
-                      otherDropdown.classList.add("hidden");
-                      otherDropdown.style.maxHeight = "0";
-                      otherArrow.style.transform = "rotate(0deg)";
-                    }
-                  });
-
-                  // Toggle current dropdown
-                  if (dropdown.classList.contains("hidden")) {
-                    dropdown.classList.remove("hidden");
-                    dropdown.style.maxHeight = `${dropdown.scrollHeight}px`;
-                    arrow.style.transform = "rotate(180deg)";
-                  } else {
-                    dropdown.style.maxHeight = "0";
-                    setTimeout(() => {
-                      dropdown.classList.add("hidden");
-                    }, 300); // Match transition duration
-                    arrow.style.transform = "rotate(0deg)";
-                  }
-                });
-              });
-            </script>
-
-            <!-- scrupt quantity -->
-            <script>
-              function changeImage(src) {
-                document.getElementById("mainImage").src = src;
-              }
-
-              function incrementQuantity() {
-                const input = document.getElementById("quantity");
-                input.value = parseInt(input.value) + 1;
-              }
-
-              function decrementQuantity() {
-                const input = document.getElementById("quantity");
-                if (parseInt(input.value) > 1) {
-                  input.value = parseInt(input.value) - 1;
-                }
-              }
-            </script>
           </div>
         </section>
-
         <!-- description -->
         <section class="bg-[#F0F8E7]">
           <div class="mx-auto container px-2 md:px-16">
@@ -387,26 +344,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 <h1 class="text-xl md:text-2xl">Description</h1>
                 <div class="space-y-4">
                   <?php
-$desc = $product['description'] ?? '';
-$descParts = explode('---resources---', $desc);
-$mainDesc = trim($descParts[0]);
-$resources = isset($descParts[1]) ? array_filter(array_map('trim', explode("\n", $descParts[1]))) : [];
-?>
-<div class="space-y-4">
-  <p>
-    <?php echo htmlspecialchars($mainDesc ?: 'Deskripsi produk belum tersedia.'); ?>
-  </p>
-</div>
-<?php if (!empty($resources)): ?>
-  <div class="space-y-1.5">
-    <p>Additional Resources:</p>
-    <ul class="list-disc pl-4">
-      <?php foreach ($resources as $resource): ?>
-        <li><?php echo htmlspecialchars($resource); ?></li>
-      <?php endforeach; ?>
-    </ul>
-  </div>
-<?php endif; ?>
+                  $desc = $product['description'] ?? '';
+                  $descParts = explode('---resources---', $desc);
+                  $mainDesc = trim($descParts[0]);
+                  $resources = isset($descParts[1]) ? array_filter(array_map('trim', explode("\n", $descParts[1]))) : [];
+                  ?>
+                  <div class="space-y-4">
+                    <p>
+                      <?php echo htmlspecialchars($mainDesc ?: 'Deskripsi produk belum tersedia.'); ?>
+                    </p>
+                  </div>
+                  <?php if (!empty($resources)): ?>
+                    <div class="space-y-1.5">
+                      <p>Additional Resources:</p>
+                      <ul class="list-disc pl-4">
+                        <?php foreach ($resources as $resource): ?>
+                          <li><?php echo htmlspecialchars($resource); ?></li>
+                        <?php endforeach; ?>
+                      </ul>
+                    </div>
+                  <?php endif; ?>
                 </div>
                 <div class="space-y-1.5">
                   <h1 class="text-xl md:text-2xl">Botanical Name</h1>
@@ -452,8 +409,173 @@ $resources = isset($descParts[1]) ? array_filter(array_map('trim', explode("\n",
     </main>
     <!-- footer -->
     <?php include('./component/footer.php'); ?>
-
+    <!-- Pastikan ini di bawah semua include -->
     <script src="./src/script.js"></script>
-    <!-- ...existing scripts... -->
+    <script>
+            // Script untuk quantity controls dan add to cart
+            function changeImage(src) {
+                document.getElementById("mainImage").src = src;
+            }
+
+            function incrementQuantity() {
+                const input = document.getElementById("quantity");
+                const cartQuantity = document.getElementById("cartQuantity");
+                const newValue = parseInt(input.value) + 1;
+                input.value = newValue;
+                cartQuantity.value = newValue;
+            }
+
+            function decrementQuantity() {
+                const input = document.getElementById("quantity");
+                const cartQuantity = document.getElementById("cartQuantity");
+                if (parseInt(input.value) > 1) {
+                    const newValue = parseInt(input.value) - 1;
+                    input.value = newValue;
+                    cartQuantity.value = newValue;
+                }
+            }
+
+            // Sync quantity input dengan hidden input untuk cart
+            document.addEventListener('DOMContentLoaded', function() {
+                const quantityInput = document.getElementById('quantity');
+                const cartQuantity = document.getElementById('cartQuantity');
+                
+                // Sync quantity saat input berubah
+                quantityInput.addEventListener('input', function() {
+                    let value = parseInt(this.value);
+                    if (isNaN(value) || value < 1) {
+                        value = 1;
+                        this.value = 1;
+                    }
+                    cartQuantity.value = value;
+                });
+                
+                // Handle add to cart form submission
+                const addToCartForm = document.getElementById('addToCartForm');
+                if (addToCartForm) {
+                    addToCartForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        const submitButton = this.querySelector('button[type="submit"]');
+                        const originalText = submitButton.textContent;
+                        
+                        // Disable button dan ubah text
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Adding...';
+                        
+                        const formData = new FormData(this);
+                        
+                        fetch(this.action, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Reset quantity ke 1
+                                quantityInput.value = 1;
+                                cartQuantity.value = 1;
+
+                                // Set flag agar sidebar terbuka setelah reload
+                                localStorage.setItem('openCartSidebar', 'true');
+
+                                // Buka cart sidebar
+                                const cartSidebar = document.getElementById('cartSidebar');
+                                const cartOverlay = document.getElementById('cartSidebarOverlay');
+                                if (cartSidebar && cartOverlay) {
+                                    cartSidebar.classList.remove('translate-x-full');
+                                    cartOverlay.classList.remove('hidden');
+                                }
+
+                                // Refresh halaman untuk update cart content
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 500);
+                            } else {
+                                alert(data.message || 'Failed to add product to cart');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while adding product to cart');
+                        })
+                        .finally(() => {
+                            // Re-enable button
+                            submitButton.disabled = false;
+                            submitButton.textContent = originalText;
+                        });
+                    });
+                }
+                
+                // Cart sidebar controls
+                const cartButton = document.getElementById('cartButton');
+                const cartSidebar = document.getElementById('cartSidebar');
+                const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
+                const closeCartSidebar = document.getElementById('closeCartSidebar');
+
+                if (cartButton && cartSidebar && cartSidebarOverlay && closeCartSidebar) {
+                    cartButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        cartSidebar.classList.remove('translate-x-full');
+                        cartSidebarOverlay.classList.remove('hidden');
+                    });
+                    
+                    closeCartSidebar.addEventListener('click', function() {
+                        cartSidebar.classList.add('translate-x-full');
+                        cartSidebarOverlay.classList.add('hidden');
+                    });
+                    
+                    cartSidebarOverlay.addEventListener('click', function() {
+                        cartSidebar.classList.add('translate-x-full');
+                        cartSidebarOverlay.classList.add('hidden');
+                    });
+                }
+            });
+
+            // Product like functionality (existing code)
+            document.addEventListener('DOMContentLoaded', function () {
+                const likeBtn = document.getElementById('like-btn');
+                const likeCount = document.getElementById('like-count');
+                const likeIcon = document.getElementById('like-icon');
+                let liked = <?php echo $userLiked ? 'true' : 'false'; ?>;
+                let productId = <?php echo $productId; ?>;
+
+                if (likeBtn) {
+                    likeBtn.addEventListener('click', function () {
+                        fetch('product-like.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'product_id=' + productId
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                liked = data.liked;
+                                likeCount.textContent = data.total;
+                                if (liked) {
+                                    likeIcon.setAttribute('fill', '#ef4444');
+                                    likeIcon.setAttribute('stroke', '#ef4444');
+                                    likeCount.classList.remove('text-white');
+                                    likeCount.classList.add('text-red-500');
+                                } else {
+                                    likeIcon.setAttribute('fill', 'none');
+                                    likeIcon.setAttribute('stroke', 'white');
+                                    likeCount.classList.remove('text-red-500');
+                                    likeCount.classList.add('text-white');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    });
+                }
+            });
+
+         
+            </script>
+
+            <script src="./src/script.js"></script>
+
   </body>
 </html>
